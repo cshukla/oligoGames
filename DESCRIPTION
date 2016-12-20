@@ -1,0 +1,28 @@
+Package: oligoGames
+Type: Package
+Title: Analyze data from massively parallel reporter assays
+Version: 0.1.0
+Author: Chinmay Shukla <cshukla@fas.harvard.edu>, Keegan Korthauer
+    <keegan@jimmy.harvard.edu>, Rafael Irizarry <rafa@jimmy.harvard.edu>
+Maintainer: Chinmay Shukla <cshukla@fas.harvard.edu>
+Description: Analyzing data from massively parallel reporter assays. Allows user
+    to design an oligo pool and generate oligo sequences, map fastq files to the
+    barcodes, model oligo count data to obtain nucleotide resolution count data and
+    finally make inferences about peak regions from the modelled data.
+Depends:
+    R (>= 3.3.2)
+Imports:
+    EBSeq,
+    utils,
+    dplyr,
+    reshape2,
+    tidyr,
+    GenomicRanges,
+    bumphunter,
+    bsseq,
+    splines,
+    doParallel
+License: GPL (>=2)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 5.0.1
