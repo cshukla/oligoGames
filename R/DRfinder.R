@@ -1291,6 +1291,15 @@ DMRfinder <- function(meth.mat, unmeth.mat, minInSpan=10,
   }else{
     stop("Error: Currently only balanced designs supported")
   }
-
-  return(list(res=res, res.flip=res.flip))
+  
+  perm.ordered <- c(sort(abs(res$stat.ols), method="quick"), Inf)
+  pval <- rep(NA, nrow(res))
+  pval[!is.na(res$stat.ols)] <- (1 + 
+                          sapply(abs(res$stat.ols[!is.na(res$stat.ols)]), 
+                                function(x) length(perm.ordered) - 
+                                min(which(x <= perm.ordered)))) /
+                           (1 + sum(!is.na(res$stat.ols)))							
+  res$pval <- pval
+  res$qval <- p.adjust(pval, method="BH")
+  return(res)
 }
