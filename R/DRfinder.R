@@ -1240,57 +1240,90 @@ wgbs.bumphunter = function (meth.mat, unmeth.mat, design, method = "LM",
 #' @return
 #' @export
 
-DMRfinder <- function(meth.mat, unmeth.mat, minInSpan=10,
+DRfinder <- function(lncRNA, minInSpan=10,
                       design, method = "LM", chr = NULL, pos, cluster = NULL,
                       coef = 2, minNum=70, bpSpan=1000, maxGapSmooth=1e8, minNumRegion=5, betabin=FALSE,
                       cutoff = NULL, pickCutoff = FALSE, pickCutoffQ = 0.99, maxGap = 500,
                       nullMethod = "GLMM", smooth = FALSE, smoothFunction = locfitByCluster,
                       useWeights = TRUE, B = ncol(permutations), permutations = NULL,  verbose = TRUE,
-                      workers = NULL, loci=TRUE, subject=TRUE, sampleSize=(ncol(meth.mat)/2)){
+                      workers = NULL, loci=TRUE, subject=TRUE, sampleSize=(ncol(meth.mat)/2),
+                      maxPerms=50){
 
-
+  # create BSSeq object out of the lncRNA counts (for ease in plotting fns 
+  #  already set up)
+  # M = the nuclear or cytosol signal
+  # Cov = the total signal plus the nuclear or cytosol signal 
+  #  (have to constrain 0<=M<=Cov)
+  
+  bs <- BSseq(chr = rownames(lncRNA), pos = lncRNA[,1],
+              M = lncRNA[,2:9], Cov = lncRNA[,c(10:13, 10:13)] + lncRNA[,2:9], 
+              sampleNames = colnames(lncRNA)[2:9])
+  pData(bs)$Type <- c(rep("Cytosol", 4), rep("Nuclear", 4))
+  
+  design = model.matrix(~c(rep("Cytosol", 4), rep("Nuclear", 4)))
+  
+  nlocs = nrow(lncRNA) 
+  meth.mat = lncRNA[,2:9]
+  unmeth.mat = lncRNA[,c(10:13, 10:13)]
+  
+  chr = rownames(lncRNA)
+  pos = lncRNA[,1]
+  print(unique(chr))
+  colnames(meth.mat) <- colnames(unmeth.mat) <-  sampleNames(bs)
+  
   # get observed stats
 
   res = wgbs.bumphunter(meth.mat = meth.mat, unmeth.mat = unmeth.mat, minInSpan=minInSpan,
-                        design = design, method = method, chr = chr, pos = pos, cluster = cluster,
+                        design = design, method = method, chr = chr, pos = pos, cluster = cluster, 
                         coef = coef, minNum=minNum, maxGapSmooth=maxGapSmooth, minNumRegion=minNumRegion,
-                        cutoff = cutoff, pickCutoff = pickCutoff, pickCutoffQ = pickCutoffQ, maxGap = maxGap,
-                        nullMethod = nullMethod, smooth = smooth, smoothFunction = smoothFunction,
+                        cutoff = cutoff, pickCutoff = pickCutoff, pickCutoffQ = pickCutoffQ, maxGap = maxGap, 
+                        nullMethod = nullMethod, smooth = smooth, smoothFunction = smoothFunction, 
                         useWeights = useWeights, B = B, permutations = permutations,  verbose = verbose,
-                        workers = workers, loci=loci, subject=subject)
+                        workers = workers, loci=loci, subject=subject, betabin=betabin) 
 
 
-  # configure the permutations to evaluate
   if (nrow(design)%%2==0){
     perms <- combn(seq(1, nrow(design)), sampleSize)
     perms <- perms[, 2:(ncol(perms)/2)]
-    res.flip <- vector("list", 3)
-
+    res.flip <- NULL
+    
+    if (maxPerms < ncol(perms)){
+      # subset on 'balanced perms'
+      if (sampleSize > 3 & sampleSize < 6){ 
+        sg <- apply(perms, 2, function(x) sum(x > sampleSize))
+        perms <- perms[, sg < (sampleSize-1) & sg >= 2 ]
+        maxPerms <- min(maxPerms, ncol(perms))
+      }else if(sampleSize >= 6){
+        sg <- apply(perms, 2, function(x) sum(x > sampleSize))
+        perms <- perms[, sg >= floor(sampleSize/2) & sg <= ceiling(sampleSize/2) ]
+      }
+      perms <- perms[,sort(sample(1:ncol(perms), maxPerms, replace=FALSE))]
+    }
+    
     # Now rerun on flipped designs and concatenate results
     for (j in 1:ncol(perms)){
       reorder <- perms[,j]
       designr <- design
       designr[,2] <- 0
       designr[reorder,2] <- 1
-
-      res.flip.p = wgbs.bumphunter(meth.mat = meth.mat, unmeth.mat = unmeth.mat,
+      
+      res.flip.p = wgbs.bumphunter(meth.mat = meth.mat, unmeth.mat = unmeth.mat, 
                                    minInSpan=minInSpan,
-                                   design = designr, method = method, chr = chr, pos = pos, cluster = cluster,
+                                   design = designr, method = method, chr = chr, pos = pos, cluster = cluster, 
                                    coef = coef, minNum=minNum, maxGapSmooth=maxGapSmooth, minNumRegion=minNumRegion,
-                                   cutoff = cutoff, pickCutoff = pickCutoff, pickCutoffQ = pickCutoffQ, maxGap = maxGap,
-                                   nullMethod = nullMethod, smooth = smooth, smoothFunction = smoothFunction,
+                                   cutoff = cutoff, pickCutoff = pickCutoff, pickCutoffQ = pickCutoffQ, maxGap = maxGap, 
+                                   nullMethod = nullMethod, smooth = smooth, smoothFunction = smoothFunction, 
                                    useWeights = useWeights, B = B, permutations = permutations,  verbose = verbose,
-                                   workers = workers, loci=loci, subject=subject)
-
-      res.flip[[1]] <- rbind(res.flip[[1]], res.flip.p[[1]])
-      res.flip[[2]] <- c(res.flip[[2]], res.flip.p[[2]])
-      res.flip[[3]] <- c(res.flip[[3]], res.flip.p[[3]])
-      names(res.flip) <- names(res.flip.p)
-      message(paste0(j, " out of ", ncol(perms), " permutations completed"))
-    }
+                                   workers = workers, loci=loci, subject=subject, betabin=betabin) 
+      res.flip.p$permNum <- j 
+      
+      res.flip <- rbind(res.flip, res.flip.p)
+      print(paste0(j, " out of ", ncol(perms), " permutations completed"))
+    }	
   }else{
     stop("Error: Currently only balanced designs supported")
   }
+  rm(res.flip.p)
   
   perm.ordered <- c(sort(abs(res$stat.ols), method="quick"), Inf)
   pval <- rep(NA, nrow(res))
