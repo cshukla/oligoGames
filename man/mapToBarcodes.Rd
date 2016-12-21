@@ -4,7 +4,8 @@
 \alias{mapToBarcodes}
 \title{A function to map to barcodes}
 \usage{
-mapToBarcodes(fastqCases, fastqControls, labels, oligoMap, oligoOut)
+mapToBarcodes(fastqCases, fastqControls, labels = "nuclear,total",
+  oligoMap = "oligoMap.fa", oligoOut = "oligoOut")
 }
 \arguments{
 \item{fastqCases}{string of comma seperated fastq files for cases}

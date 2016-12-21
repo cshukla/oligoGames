@@ -12,6 +12,7 @@ Description: Analyzing data from massively parallel reporter assays. Allows user
 Depends:
     R (>= 3.3.2)
 Imports:
+    rPython,
     EBSeq,
     utils,
     dplyr,

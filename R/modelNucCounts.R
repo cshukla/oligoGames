@@ -104,15 +104,13 @@ modelNucCounts <- function(normalizedCounts, metaData,
                 N3=median(Nuclei_BioRep3), N4=median(Nuclei_BioRep4),
                 T1=median(Total_BioRep1), T2=median(Total_BioRep2),
                 T3=median(Total_BioRep3), T4=median(Total_BioRep4))
-  } else {
-    if (modelMethod=="sum") {
+  }else if (modelMethod=="sum") {
       bps_model <- bps %>%
         group_by(oligoID, bps) %>%
         summarise(N1=sum(Nuclei_BioRep1), N2=sum(Nuclei_BioRep2),
                   N3=sum(Nuclei_BioRep3), N4=sum(Nuclei_BioRep4),
                   T1=sum(Total_BioRep1), T2=sum(Total_BioRep2),
                   T3=sum(Total_BioRep3), T4=sum(Total_BioRep4))
-    }
   } else {
     message("pgm to be implemented here...")
   }
