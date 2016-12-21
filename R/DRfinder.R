@@ -455,12 +455,11 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr, maxGapSmooth=maxGapSmooth
   if (!getDoParRegistered())
     registerDoSEQ()
 
-  #cores <- getDoParWorkers()
   ret.all <- NULL
   cores <- workers
   # loop through each chromosome to mitigate memory spikes
   for (chromosome in unique(chr)){
-    t1 <- proc.time()
+
     clusterC <- clusterMaker(chr[chr==chromosome], x[chr==chromosome], maxGap = maxGapSmooth)
     while (length(unique(clusterC)) < cores){
       newGap <- maxGapSmooth*0.9
@@ -469,8 +468,7 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr, maxGapSmooth=maxGapSmooth
       maxGapSmooth <- newGap
     }
 
-    #print(length(unique(clusterC)))
-    # cores <- min(workers, length(unique(clusterC)))
+
     Indexes <- split(seq(along=clusterC), clusterC)
     IndexesChunks <- vector("list", length = cores)
     baseSize <- length(Indexes) %/% cores
@@ -492,40 +490,6 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr, maxGapSmooth=maxGapSmooth
       do.call(c, unname(Indexes[idxes]))
     })
 
-    # print(str(IndexesChunks))
-
-    #dataChunk <- vector("list", length = length(IndexesChunks))
-
-    #for(ii in 1:length(IndexesChunks)) {
-    #	dataChunk[[ii]] <- data.frame(y=y[IndexesChunks[[ii]]],
-    #								  x=x[IndexesChunks[[ii]]],
-    #								  weights=weights[IndexesChunks[[ii]]],
-    #								  cluster=cluster[IndexesChunks[[ii]]],
-    #								  index=IndexesChunks[[ii]])
-    #}
-    #rm(y)
-    #rm(x)
-    #rm(weights)
-    #rm(cluster)
-    #rm(IndexesChunks)
-
-    #ret <- mclapply(IndexesChunks, function(idx) {
-    #			sm <- smoothFunction(y=y[idx,], x=x[idx], cluster=cluster[idx],
-    #                weights=weights[idx,], verbose=verbose, minNum = minNum,
-    #                minInSpan = minInSpan, bpSpan = bpSpan)
-    #            c(sm, list(idx = idx))
-    #            },
-    #            mc.cores = cores, mc.preschedule=FALSE)
-
-    #idx <- NULL ## for R CMD check
-    #datchunk <- NULL
-    #ret <- foreach(datchunk = iter(dataChunk), .packages = "bumphunter") %dorng% {
-    #    sm <- smoothFunction(dat=datchunk, verbose=verbose, minNum = minNum,
-    #                 		 minInSpan = minInSpan, bpSpan = bpSpan)
-    #    c(sm, list(idx = datchunk$index))
-    #}
-
-    #print(paste0("Using smoothing span based on minInSpan=", minInSpan))
     idx <- NULL ## for R CMD check
     ret <- foreach(idx = iter(IndexesChunks), .packages = "bumphunter") %dorng% {
       sm <- locfitByCluster2(idx)
@@ -545,9 +509,6 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr, maxGapSmooth=maxGapSmooth
       ret.all$idx <- c(ret.all$idx, ret$idx)
     }
     rm(ret)
-    t2 <- proc.time()
-    message(paste0("Done Smoothing Chromosome ", chromosome, ". Took ",
-                   round((t2-t1)[3]/60, 2), " minutes"))
   }
 
   ## Now fixing order issue
@@ -655,28 +616,18 @@ getEstimateWeighted = function (mat, wt.mat, design, coef)
 
 # Function to compute the coefficient estimates for regression of the
 # methylation levels on the group indicator variable, at each CpG site
-getEstimate = function (mat, design, coef, B = NULL, permutations = NULL, full = FALSE)
+getEstimate = function (mat, design, coef)
 {
   v <- design[, coef]
   A <- design[, -coef, drop = FALSE]
   qa <- qr(A)
   S <- diag(nrow(A)) - tcrossprod(qr.Q(qa))
-  vv <- if (is.null(B)){
-    matrix(v, ncol = 1)
-  }else {
-    if (is.null(permutations)) {
-      replicate(B, sample(v))
-    }else {
-      apply(permutations, 2, function(i) v[i])
-    }
-  }
-
+  vv <- matrix(v, ncol = 1)
+  
   sv <- S %*% vv
   vsv <- diag(crossprod(vv, sv))
   b <- (mat %*% crossprod(S, vv)/vsv)
-  if (ncol(b) == 1) a <- mat %*% as.matrix(rep(1/nrow(design), nrow(design))) - b*mean(v) else {
-    a <- replicate(B, as.vector(mat %*% as.matrix(rep(1/nrow(design), nrow(design))))) - b*mean(v)
-  }
+  a <- mat %*% as.matrix(rep(1/nrow(design), nrow(design))) - b*mean(v) 
 
   x.cov = design[, 2]
   deno = sum((x.cov - mean(x.cov))^2)
@@ -690,29 +641,14 @@ getEstimate = function (mat, design, coef, B = NULL, permutations = NULL, full =
     b <- matrix(b, ncol = 1)
   if (!is.matrix(mat))
     mat <- matrix(mat, nrow = 1)
-  if (full) {
-    sy <- mat %*% S
-    df.residual <- ncol(mat) - qa$rank - 1
-    if (is.null(B)) {
-      sigma <- matrix(sqrt(rowSums((sy - tcrossprod(b,
-                                                    sv))^2)/df.residual), ncol = 1)
-    }else {
-      sigma <- b
-      tmp <- sy
-      for (j in 1:B) {
-        tmp <- tcrossprod(b[, j], sv[, j])
-        sigma[, j] <- rowSums((sy - tmp)^2)
-      }
-      sigma <- sqrt(sigma/df.residual)
-    }
-    sd.meth.diff = sqrt(var.coef)*sigma
-    out <- list(meth.diff = meth.diff, sd.meth.diff = sd.meth.diff, stdev.unscaled = sqrt(1/vsv),
-                df.residual = df.residual)
-    if (is.null(B))
-      out$stdev <- as.numeric(out$stdev)
-  }else {
-    out <- meth.diff
-  }
+
+  sy <- mat %*% S
+  df.residual <- ncol(mat) - qa$rank - 1
+  sigma <- matrix(sqrt(rowSums((sy - tcrossprod(b,
+                                                sv))^2)/df.residual), ncol = 1)
+  sd.meth.diff = sqrt(var.coef)*sigma
+  out <- list(meth.diff = meth.diff, sd.meth.diff = sd.meth.diff)
+ 
   return(out)
 }
 
@@ -737,113 +673,15 @@ getEstimate = function (mat, design, coef, B = NULL, permutations = NULL, full =
 
 ##The WGBS version of the '.getEstimate' function in Bumphunter for computing
 ##the estimated difference of population means for the two biological groups
-estim = function (meth.mat, unmeth.mat, design, method = "LM", coef, B = NULL,
-                  permutations = NULL, full, workers=NULL)
+estim = function (meth.mat, unmeth.mat, design, coef)
 {
-  registerDoParallel()
-  if (is.null(workers)) { workers <- getDoParWorkers()/6 }
-  backend <- getDoParName()
-  version <- getDoParVersion()
-  subverbose <- max(as.integer(verbose) - 1L, 0)
-
-  ## For a linear regression of logit(meth.level) on the biological group
-  ## indicator variable at each CpG site
-  if (method == "LM"){
-    ##mat = meth.mat/(meth.mat + unmeth.mat)
-    mat <- log2( (meth.mat + 0.5) / (unmeth.mat + 0.5) )
-    if(paired){
-      ####mat <- mat[,1:sampleSize] - mat[,(sampleSize+1):(2*sampleSize)]
-      mat <- mat[,design[,2]==1] - mat[,design[,2]==0]
-      meth.diff = rowMeans(mat)
-      sd.meth.diff = apply(mat, 1, sd)
-    }else{
-
-   ###   eps = min(mat[mat != 0])
-  ####    mat[mat == 0] = eps
-    ###  mat[mat == 1] = 1 - eps
-      logit.mat = mat #log(mat/(1-mat))
-      if (is.null(B)){
-        if (full){
-          lm.fit = getEstimate(mat = logit.mat, design = design, coef = coef, permutations = permutations, full = TRUE)
-
-          meth.diff = lm.fit$meth.diff
-          sd.meth.diff = lm.fit$sd.meth.diff
-          #meth.diff <- sapply(lm.fit, function(s) s[[1]])
-          #sd.meth.diff <- sapply(lm.fit, function(s) s[[2]])
-        }else {
-          lm.fit = getEstimate(mat = logit.mat, design = design, coef = coef, permutations = permutations, full = FALSE)
-          meth.diff = lm.fit$meth.diff
-          sd.meth.diff = lm.fit$sd.meth.diff
-        }
-      }
-
-      if (!is.null(B)){
-        if (full){
-          lm.fit = getEstimate(mat = logit.mat, design = design, coef = coef, permutations = permutations, B = B, full = TRUE)
-          meth.diff = lm.fit$meth.diff
-          sd.meth.diff = lm.fit$sd.meth.diff
-        }else {
-          lm.fit = getEstimate(mat = logit.mat, design = design, coef = coef, permutations = permutations, B = B, full = FALSE)
-          meth.diff = lm.fit$meth.diff
-          sd.meth.diff = lm.fit$sd.meth.diff
-        }
-      }
-    }
-  }
-
-  ## For a generalized linear regression of (meth.readcount, unmeth.readcount)
-  #on the biological group indicator variable at each CpG site
-  if (method == "GLM"){
-    glm.func = function(boot, u){
-      meth = meth.mat[u, boot]
-      unmeth = unmeth.mat[u, boot]
-      vec = meth/(meth + unmeth)
-      df = data.frame(meth, unmeth)
-      fac = as.factor(design[, 2])
-      fit = speedglm(cbind(meth, unmeth) ~ fac, data = df, family = binomial())
-
-      ## Computing the estimated difference of populations means for the two groups
-      meth.diff = exp(fit$coef[1])/(1 + exp(fit$coef[1])) - exp(fit$coef[1] + fit$coef[2])/(1 + exp(fit$coef[1] + fit$coef[2]))
-
-      grad = as.matrix(c(exp(fit$coef[1] + fit$coef[2])/(1 + exp(fit$coef[1] + fit$coef[2]))^2 - exp(fit$coef[1])/(1 + exp(fit$coef[1]))^2, exp(fit$coef[1] + fit$coef[2])/(1 + exp(fit$coef[1] + fit$coef[2]))^2))
-      sd.meth.diff = sqrt(t(grad)%*%vcov(fit)%*%grad)
-
-      ## Returning the estimated mean methylation difference between the two groups along with its estimated standard deviation
-      obj = c(meth.diff, sd.meth.diff)
-      return(obj)
-    }
-
-    ## For coefficient estimation with no permutation test
-    if (is.null(B)){
-      glm.fit = mclapply(1:nrow(meth.mat), function(u) glm.func(1:nrow(design), u),
-                         mc.cores = workers)
-      mat = matrix(unlist(glm.fit), nrow(meth.mat), 2, byrow = TRUE)
-      meth.diff = mat[, 1]
-      sd.meth.diff = mat[, 2]
-    }
-
-    ## For coefficient estimation with a permutation test based on 'B' permutations of the biological group labels
-    if (!is.null(B)){
-      v <- 1:ncol(meth.mat)
-      vv <-  replicate(B, sample(v))
-
-      chunksize <- ceiling(B/workers)
-      sub <- NULL
-      glm.fit <- foreach(sub = iter(vv, by = "col", chunksize = chunksize),
-                         .combine = "cbind", .packages = "bumphunter") %dorng% {
-                           apply(sub, 2, function(boot) mclapply(1:nrow(meth.mat), function(u) glm.func(boot, u), mc.cores = workers))
-                         }
-
-      mat = mclapply(1:B, function(boot) matrix(unlist(glm.fit[[boot]]), nrow(meth.mat), 2, byrow = TRUE))
-      meth.diff = sd.meth.diff = matrix(0, nrow(meth.mat), B)
-      for (b in 1:B){
-        meth.diff[, b] = mat[[b]][, 1]
-        sd.meth.diff[, b] = mat[[b]][, 2]
-      }
-    }
-  }
-
-  ## Returning the final list of estimated mean methylation differences and their SD s at all CpG sites
+  mat <- log2( (meth.mat + 0.5) / (unmeth.mat + 0.5) )
+  
+  lm.fit = getEstimate(mat = mat, design = design, coef = coef)
+  meth.diff = lm.fit$meth.diff
+  sd.meth.diff = lm.fit$sd.meth.diff
+ 
+  ## Returning the list of estimated mean methylation differences and their SD s at all CpG sites
   out <- list(meth.diff = meth.diff, sd.meth.diff = sd.meth.diff)
   return(out)
 }
@@ -886,65 +724,60 @@ estim = function (meth.mat, unmeth.mat, design, method = "LM", coef, B = NULL,
 #' @keywords inference
 #' @return
 
+
+# set input parameters
+workers <- 1 # don't parallelize 
+sampleSize <- 4
+meth.mat = meth.mat
+unmeth.mat = unmeth.mat
+design = design
+coef = 2
+cutoff = 0.05
+maxGap = 500
+maxGapSmooth = 50
+bpSpan = 100
+minNum = 3
+minNumRegion = 3
+minInSpan = 4 # 10
+smooth = FALSE
+smoothFunction = locfitByCluster
+useWeights = TRUE
+verbose = TRUE
+
+maxPerms = 34
+
+
+
 ##The WGBS version of the 'BumphunterEngine' function with 'LM' and 'GLM'
-wgbs.bumphunter = function (meth.mat, unmeth.mat, design, method = "LM",
-                            chr = NULL, pos, cluster = NULL, coef = 2, minInSpan=70, minNum=70, minNumRegion=5,
-                            cutoff = NULL, pickCutoff = FALSE, pickCutoffQ = 0.99, maxGap = 500, maxGapSmooth=1e8,
-                            nullMethod = "GLMM", smooth = FALSE, bpSpan=1000,  betabin=FALSE,
-                            smoothFunction = locfitByCluster, useWeights = TRUE, B = ncol(permutations),
-                            permutations = NULL, verbose = TRUE, workers=NULL, loci=TRUE, subject=TRUE, ...)
+wgbs.bumphunter = function (meth.mat, unmeth.mat, design, 
+                            chr = NULL, pos, coef = 2, minInSpan=70, minNum=70, minNumRegion=5,
+                            cutoff = NULL, maxGap = 500, maxGapSmooth=1e8,
+                            smooth = FALSE, bpSpan=1000,
+                            smoothFunction = locfitByCluster, useWeights = TRUE, 
+                            verbose = TRUE, workers=NULL, loci=TRUE, subject=TRUE, ...)
 {
-  nullMethod <- match.arg(nullMethod)
-  if (is.null(B))
-    B = 0
-  if (!is.matrix(permutations) & !is.null(permutations))
-    stop("permutations must be NULL or a matrix.")
-  if (!is.null(permutations)) {
-    if (nrow(design) != nrow(permutations))
-      stop("Number of rows of 'design' must match number of rows of 'permutations'.")
-    if (B != ncol(permutations)) {
-      warning("Ignoring the supplied B. Using 'ncol(permutations)' instead.")
-      B = ncol(permutations)
-    }
-  }
-  if (ncol(design) > 2 & B > 0 & nullMethod == "permutation") {
-    message("[bumphunterEngine] The use of the permutation test is not recommended with multiple covariates, (ncol(design)>2). Consider changing 'nullMethod' changed to 'bootstrap' instead. See vignette for more information.")
-    warning("The use of the permutation test is not recommended with multiple covariates, (ncol(design)>2). Consider changing 'nullMethod' changed to 'bootstrap' instead. See vignette for more information.")
-  }
   if (!is.matrix(meth.mat))
     stop("'meth.mat' and 'unmeth.mat' must be a matrices.")
   if (ncol(meth.mat) != nrow(design))
     stop("Total number of columns in 'meth.mat' and 'unmeth.mat' must  match number of rows of 'design'")
-  if (B < 0)
-    stop("'B' has to be an integer greater or equal to zero")
   if (!(is.null(cutoff) || length(cutoff) %in% 1:2))
     stop("'cutoff' has to be either NULL or a vector of length 1 or 2")
   if (length(cutoff) == 2)
     cutoff <- sort(cutoff)
-  if (is.null(cutoff) && !pickCutoff)
-    stop("Must pick a cutoff, either using 'cutoff' or 'pickCutoff'")
-  if (!is.null(cutoff) && pickCutoff) {
-    pickCutoff <- FALSE
-    warning("'cutoff' was supplied so ignoring 'pickCutoff=TRUE'")
-  }
-  if (pickCutoff && (length(pickCutoffQ) != 1 || pickCutoff <
-                     0 || pickCutoffQ > 1))
-    stop("Using `pickCutoff = TRUE' requires that 'pickCutoffQ' is a single number between 0 and 1")
-  if (pickCutoff && B < 1)
-    stop("Must do at least one permution to pick a cutoff")
+
   if (!getDoParRegistered())
     registerDoSEQ()
   registerDoParallel()
-  if (is.null(workers)) { workers <- getDoParWorkers()/6 }
+  if (is.null(workers)) { workers <- 1 }
   backend <- getDoParName()
   version <- getDoParVersion()
   subverbose <- max(as.integer(verbose) - 1L, 0)
   if (verbose) {
     if (workers == 1) {
-      mes <- "[bumphunterEngine] Using a single core (backend: %s, version: %s)."
+      mes <- "Using a single core (backend: %s, version: %s)."
       message(sprintf(mes, backend, version))
     }else {
-      mes <- "[bumphunterEngine] Parallelizing using %s workers/cores (backend: %s, version: %s)."
+      mes <- "Parallelizing using %s workers/cores (backend: %s, version: %s)."
       message(sprintf(mes, workers, backend, version))
     }
   }
@@ -952,50 +785,28 @@ wgbs.bumphunter = function (meth.mat, unmeth.mat, design, method = "LM",
     chr <- rep("Unspecified", length(pos))
   if (is.factor(chr))
     chr <- as.character(chr)
-  if (is.null(cluster)) {
-    cluster <- clusterMaker(chr, pos, maxGap = maxGap)
-  }
+  
+  cluster <- clusterMaker(chr, pos, maxGap = maxGap)
+  
   if (verbose)
-    message("[bumphunterEngine] Computing coefficients.")
+    message("Computing coefficients.")
 
-  # cov.means = (meth.mat + unmeth.mat)%*%as.matrix(rep(1/nrow(design), nrow(design)))
-
+  tmp = estim(meth.mat = meth.mat, unmeth.mat = unmeth.mat, design = design,
+              coef = coef)
+  rawBeta <- tmp$meth.diff
+  
   if (useWeights & smooth) {
-    tmp = estim(meth.mat = meth.mat, unmeth.mat = unmeth.mat, design = design,
-                method = method, coef = coef, permutations = permutations, full = TRUE,
-                workers = workers)
-    rawBeta <- tmp$meth.diff
     sd.raw = tmp$sd.meth.diff
-    # print(sum(is.na(cov.means))); print(sum(cov.means==0))
-    # print(sum(is.na(sd.raw))); print(sum(sd.raw==0))
-    weights <- sd.raw #/cov.means
-    # print(sum(is.na(weights))); print(sum(weights==0))
-    weights[sd.raw < 10^-5] = mean(sd.raw[sd.raw > 10^-5]) # /cov.means[sd.raw < 10^-5]
+    weights <- sd.raw 
+    weights[sd.raw < 10^-5] = mean(sd.raw[sd.raw > 10^-5]) 
     rm(sd.raw)
-    rm(tmp)
-  }else {
-    tmp <- estim(meth.mat = meth.mat, unmeth.mat = unmeth.mat, design = design,
-                 method = method, coef = coef, permutations = permutations,
-                 full = TRUE, workers=workers)
-    rawBeta <- tmp$meth.diff
-    rm(tmp)
   }
-  #rm(cov.means)
+  rm(tmp)
   gc()
-
-  # replace raw beta estimates obtained with logit ols regression with simple
-  # pooled mean estimates (keep standard deviations the same to use for weights
-  # in the smoothing process
-
-  # rawBeta <- getEstimatePooled(meth.mat, unmeth.mat, design, coef)
 
   if (smooth) {
     if (verbose)
-      message("[bumphunterEngine] Smoothing coefficients.")
-    #beta <- smoother(y = rawBeta, x = pos, workers=workers, chr=chr,
-    #    maxGapSmooth=maxGapSmooth, weights = weights, smoothFunction = smoothFunction,
-    #    minNum = minNum, minInSpan = minInSpan, bpSpan = bpSpan,
-    #    verbose = 	subverbose)
+      message("Smoothing coefficients")
 
     beta <- vector("list", 3)
     beta[[1]] <- beta[[2]] <- rep(NA, length(pos))
@@ -1022,10 +833,11 @@ wgbs.bumphunter = function (meth.mat, unmeth.mat, design, method = "LM",
   rm(rawBeta)
   gc()
   if (verbose)
-    message("[bumphunterEngine] Finding regions.")
+    message("Finding regions.")
   tab <- regionFinder(x = beta, chr = chr, pos = pos, cluster = cluster,
                       cutoff = cutoff, ind = Index, minNumRegion = minNumRegion,
-                      meth.mat = meth.mat, unmeth.mat = unmeth.mat, verbose = TRUE,
+                      meth.mat = meth.mat, unmeth.mat = unmeth.mat, 
+                      verbose = TRUE,
                       design = design, workers=workers,  betabin=betabin)
   rm(beta);
   rm(chr);
@@ -1033,171 +845,14 @@ wgbs.bumphunter = function (meth.mat, unmeth.mat, design, method = "LM",
   gc()
   if (nrow(tab) == 0) {
     if (verbose)
-      message("[bumphunterEngine] No bumps found!")
+      message("No candidate regions found!")
     return(NA)
   }else {
     if (verbose)
-      message(sprintf("[bumphunterEngine] Found %s candidate regions.",
-                      nrow(tab)))
+      message(sprintf("Found %s candidate regions.", nrow(tab)))
   }
 
   return(table = tab)
-  #return(list(table = tab, coef = rawBeta, fitted = beta))
-
-  # ignore the rest of this stuff....
-
-  if (nullMethod == "permutation") {
-
-  }
-
-  if (nullMethod == "GLMM"){
-    tab = tab[tab$end-tab$start > 0, ]
-    gr.tab = GRanges(seqnames = as.character(tab$chr), IRanges(start= tab$start, end = tab$end))
-
-    m1 = length(which(design[, 2] == 1))
-    m2 = length(which(design[, 2] == 0))
-    grplabels <- c("group1", "group2")[design[,2]+1]
-
-    ##Testing the Detected Regions for Significance
-    glm.func = function(region){
-      hits = queryHits(findOverlaps(gr.wgbs, region))
-      loc.f <- as.factor(sapply(1:length(hits), function(x) rep(x, 2*sampleSize)))
-      meth = as.vector(t(meth.mat[hits, ]))
-      unmeth = as.vector(t(unmeth.mat[hits, ]))
-      sub.f = as.factor(rep(1:(m1+m2), length(hits)))  # which column (sample) the observation came from
-      g.fac = as.factor(rep(grplabels, length(hits)))	 # needs to match the design matrix
-      ind.f = as.factor(seq(1, length(g.fac)))
-      df = data.frame(meth, unmeth, g.fac, sub.f, loc.f, ind.f)
-      vec = meth/(meth + unmeth)
-      meth.zero.prop = length(meth[meth == 0])/length(meth)
-      unmeth.zero.prop = length(unmeth[unmeth == 0])/length(unmeth)
-
-      p.value = -1
-      test.stat = -1
-      beta.region = NA
-      theta.l = theta.s = NA
-      ttest = NA
-
-      #	boxplot(df$meth/(df$meth + df$unmeth) ~ df$g.fac)
-      # option 1: OLS on logit-transformed proportions
-      stat.ols0 <- summary(lm(vec~g.fac))$coefficients["g.facgroup2","t value"]
-
-      #vec[vec == 0] = min(meth.levels[meth.levels != 0])
-      #vec[vec == 1] = 1 - min(meth.levels[meth.levels != 0])
-
-      vec[vec == 0] = 1/max(meth+unmeth)
-      vec[vec == 1] = 1 - 1/max(meth+unmeth)
-
-      stat.ols = summary(lm(log(vec/(1-vec))~g.fac))$coefficients["g.facgroup2",
-                                                                  "t value"]
-
-
-
-      # option 3: beta-binomial regression
-      fit1 <- tryCatch({betabin(formula = cbind(meth, unmeth) ~ g.fac, ~ 1,
-                                link = "logit", data = df)},
-                       error=function(cond) {return(NULL)},
-                       warning=function(cond) {return(NULL)})
-
-      #fit0 <- vglm(cbind(meth, unmeth) ~ g.fac, betabinomial, trace = TRUE)
-
-      fit2 <- tryCatch({betabin(formula = cbind(meth, unmeth) ~ 1, ~ 1,
-                                link = "logit", data = df)},
-                       error=function(cond) {return(NULL)},
-                       warning=function(cond) {return(NULL)})
-
-      if (length(fit1)==0 | length(fit2)==0){
-        fit1 <- tryCatch({betabin(formula = cbind(meth, unmeth) ~ g.fac, ~ 1,
-                                  link = "logit", data = df, method="BFGS")},
-                         error=function(cond) {return(NULL)},
-                         warning=function(cond) {return(NULL)})
-
-        fit2 <- tryCatch({betabin(formula = cbind(meth, unmeth) ~ 1, ~ 1,
-                                  link = "logit", data = df, method="BFGS")},
-                         error=function(cond) {return(NULL)},
-                         warning=function(cond) {return(NULL)})
-      }
-
-      if (!(length(fit1)==0 | length(fit2)==0)){
-        stat.betabin <- as.numeric(anova(fit2, fit1)@anova.table[2,9])
-      }else{
-        stat.betabin <- NA
-      }
-
-
-
-      # option 2: Logistic regression
-      if (meth.zero.prop < 0.25 & unmeth.zero.prop < 0.25){
-        stat.log = tryCatch({summary(glm(formula = cbind(meth, unmeth) ~ g.fac,
-                                         family = binomial(link = "logit"),
-                                         data = df))$coefficients["g.facgroup2","z value"]},
-                            error=function(cond) {return(NA)},
-                            warning=function(cond) {return(NA)})
-
-      }else{	# use bias correction
-        stat.log = tryCatch({summary(glm(formula = cbind(meth, unmeth) ~ g.fac,
-                                         family = binomial(link = "logit"), method="firthglm.fit",
-                                         data = df))$coefficients["g.facgroup2","z value"]},
-                            error=function(cond) {return(NA)},
-                            warning=function(cond) {return(NA)})
-
-        # no bias correction estimation method exists; add pseudocounts to
-        # meth and unmeth counts
-        df$meth = meth + 1
-        df$unmeth = unmeth + 1
-      }
-
-      fit1 <- tryCatch({glmer(formula = cbind(meth, unmeth) ~ g.fac + (1|loc.f),
-                              family = binomial(link = "logit"), data = df)},
-                       error=function(cond) {return(NULL)},
-                       warning=function(cond) {return(NULL)})
-      fit2 <- tryCatch({glmer(formula = cbind(meth, unmeth) ~ 1 + (1|loc.f),
-                              family = binomial(link = "logit"), data = df)},
-                       error=function(cond) {return(NULL)},
-                       warning=function(cond) {return(NULL)})
-
-      if (!(length(fit1)==0 | length(fit2)==0)){
-        stat.logRE <- as.numeric(anova(fit1, fit2, test = "Chisq")[2, 6])
-      }else{
-        stat.logRE <- NA
-      }
-
-
-      #extract <- as.numeric(anova(fit1, fit2, test = "Chisq")[2, 6:8])
-      #p.value = extract[3]
-      #test.stat = extract[1]
-      #beta.region = coef(summary(fit1))["g.facgroup2", "Estimate"]
-
-
-      return(list(stat.ols0=stat.ols0,
-                  stat.ols=stat.ols,
-                  stat.log=stat.log,
-                  stat.logRE=stat.logRE,
-                  stat.betabin=stat.betabin,
-                  meth.zero.prop=meth.zero.prop,
-                  unmeth.zero.prop=unmeth.zero.prop))
-    }
-
-
-
-    registerDoParallel()
-    if (is.null(workers)) { workers <- getDoParWorkers()/6 }
-
-
-    message("[bumphunterEngine] Fitting GLMMs to Regions.")
-    tab$stat.ols = mclapply(gr.tab, glm.func.ols, mc.cores = workers)
-    #glmmout = mclapply(gr.tab, glm.func, mc.cores = workers)
-    #tab$stat.ols0 = sapply(glmmout, function(x) x[[1]])
-    #tab$stat.ols = sapply(glmmout, function(x) x[[2]])
-    #tab$stat.log = sapply(glmmout, function(x) x[[3]])
-    #tab$stat.logRE = sapply(glmmout, function(x) x[[4]])
-    #tab$stat.betabin = sapply(glmmout, function(x) x[[5]])
-    #tab$methz = sapply(glmmout, function(x) x[[6]])
-    #tab$unmethz = sapply(glmmout, function(x) x[[7]])
-
-    ret = list(table = tab, coef = rawBeta, fitted = beta)
-  }
-  #  return(ret)
 }
 
 #' A function for the WGBS version of the 'BumphunterEngine' function with 'LM'
@@ -1241,11 +896,11 @@ wgbs.bumphunter = function (meth.mat, unmeth.mat, design, method = "LM",
 #' @export
 
 DRfinder <- function(lncRNA, minInSpan=10,
-                      design, method = "LM", chr = NULL, pos, cluster = NULL,
-                      coef = 2, minNum=70, bpSpan=1000, maxGapSmooth=1e8, minNumRegion=5, betabin=FALSE,
-                      cutoff = NULL, pickCutoff = FALSE, pickCutoffQ = 0.99, maxGap = 500,
-                      nullMethod = "GLMM", smooth = FALSE, smoothFunction = locfitByCluster,
-                      useWeights = TRUE, B = ncol(permutations), permutations = NULL,  verbose = TRUE,
+                      design, chr = NULL, pos, 
+                      coef = 2, minNum=70, bpSpan=1000, maxGapSmooth=1e8, minNumRegion=5, 
+                      cutoff = NULL, maxGap = 500,
+                      smooth = FALSE, smoothFunction = locfitByCluster,
+                      useWeights = TRUE,  verbose = TRUE,
                       workers = NULL, loci=TRUE, subject=TRUE, sampleSize=(ncol(meth.mat)/2),
                       maxPerms=50){
 
@@ -1268,18 +923,17 @@ DRfinder <- function(lncRNA, minInSpan=10,
   
   chr = rownames(lncRNA)
   pos = lncRNA[,1]
-  print(unique(chr))
   colnames(meth.mat) <- colnames(unmeth.mat) <-  sampleNames(bs)
   
   # get observed stats
 
   res = wgbs.bumphunter(meth.mat = meth.mat, unmeth.mat = unmeth.mat, minInSpan=minInSpan,
-                        design = design, method = method, chr = chr, pos = pos, cluster = cluster, 
+                        design = design, chr = chr, pos = pos, 
                         coef = coef, minNum=minNum, maxGapSmooth=maxGapSmooth, minNumRegion=minNumRegion,
-                        cutoff = cutoff, pickCutoff = pickCutoff, pickCutoffQ = pickCutoffQ, maxGap = maxGap, 
-                        nullMethod = nullMethod, smooth = smooth, smoothFunction = smoothFunction, 
-                        useWeights = useWeights, B = B, permutations = permutations,  verbose = verbose,
-                        workers = workers, loci=loci, subject=subject, betabin=betabin) 
+                        cutoff = cutoff, maxGap = maxGap, 
+                        smooth = smooth, smoothFunction = smoothFunction, 
+                        useWeights = useWeights,  verbose = verbose,
+                        workers = workers, loci=loci, subject=subject) 
 
 
   if (nrow(design)%%2==0){
@@ -1309,12 +963,12 @@ DRfinder <- function(lncRNA, minInSpan=10,
       
       res.flip.p = wgbs.bumphunter(meth.mat = meth.mat, unmeth.mat = unmeth.mat, 
                                    minInSpan=minInSpan,
-                                   design = designr, method = method, chr = chr, pos = pos, cluster = cluster, 
+                                   design = designr, chr = chr, pos = pos, 
                                    coef = coef, minNum=minNum, maxGapSmooth=maxGapSmooth, minNumRegion=minNumRegion,
-                                   cutoff = cutoff, pickCutoff = pickCutoff, pickCutoffQ = pickCutoffQ, maxGap = maxGap, 
-                                   nullMethod = nullMethod, smooth = smooth, smoothFunction = smoothFunction, 
-                                   useWeights = useWeights, B = B, permutations = permutations,  verbose = verbose,
-                                   workers = workers, loci=loci, subject=subject, betabin=betabin) 
+                                   cutoff = cutoff,  maxGap = maxGap, 
+                                   smooth = smooth, smoothFunction = smoothFunction, 
+                                   useWeights = useWeights,  verbose = verbose,
+                                   workers = workers, loci=loci, subject=subject) 
       res.flip.p$permNum <- j 
       
       res.flip <- rbind(res.flip, res.flip.p)
