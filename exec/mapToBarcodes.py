@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from optparse import OptionParser
 import sys, os, gzip
 
 ########################################################################
@@ -15,45 +14,7 @@ import sys, os, gzip
 # 	- Compile counts for each transcript in a simple table with each
 # 	  replicate as a column and individual transcripts as rows
 ########################################################################
-def main():
-	usage='usage:%prog [options] <fastqCase1,fastqCase2,fastqCase3,...> <fastqControl1,fastqControl2,fastqControl3,...>'
-	parser = OptionParser(usage)
-	parser.add_option('--labels', dest='labels', default='nuclear,total', type=str, help='Labels for the case and control (input) fastq files [Default: %default]')
-	parser.add_option('--oligoMap', dest='str', default='oligoMap.tsv', help='A file mapping each transcript (oligo) to a unique barcode and variable sequence [Default: %default]')
-	parser.add_option('--out', dest='outDir', default='oligoOut', type=str, help='Directory for output files [Default: %default]')
-	(options, args) = parser.parse_args()
 
-	if len(args)==2:
-		fastqCase = args[0].split(',')
-		fastqControl = args[0].split(',')
-	else:
-		parser.error('Please provide fastq files for case and control' %(usage))
-
-	################################################
-	# Read in the counts file headers and infer the
-	# number of replicates and set the names of the
-	# two conditions
-	################################################
-	print >> sys.stderr, 'Reading and setting input arguments...'
-	labels = options.labels.split(',')
-	oligoMap = options.oligoMap
-
-	################################################
-	# Check the presence of the output directory.
-	# If absent create it
-	################################################
-	
-
-	#######################################
-	# Make a hash linking each barcode,
-	# variable sequence and transcript ID
-	#######################################
-	
-
-	
-	allOligoCounts = 
-	barcodeCounts(fastqCase, fastqControl, labels, allOligoCounts, barcodeTranscript)
-	inputData = allOligoCounts
 
 ######################################################################
 # barcodeCounts
@@ -71,8 +32,15 @@ def main():
 # 	  to allOligoCounts file
 ######################################################################
 def barcodeCounts(fastqCase, fastqControl, labels, oligoMap, outDir):
+	################################################
+	# Read in the counts file headers and infer the
+	# number of replicates and set the names of the
+	# two conditions
+	################################################
+	print >> sys.stderr, 'Reading and setting input arguments...'
 	fastqCase = fastqCase.split(',')
 	fastqControl = fastqControl.split(',')
+	labels = labels.split(',')
 
 	#######################################
 	# Make a hash linking each barcode,
