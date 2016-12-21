@@ -16,6 +16,7 @@
 #' @import tidyr
 #' @importFrom stats median
 #' @importFrom utils read.table
+#' @importFrom dplyr summarise
 #' @keywords modeling
 #' @return modeledNucs matrix of modeled nucleotide counts
 #' @export

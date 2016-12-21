@@ -4,7 +4,8 @@
 \alias{modelNucCounts}
 \title{A function to normalize counts}
 \usage{
-modelNucCounts(normalizedCounts, metaData, modelMethod)
+modelNucCounts(normalizedCounts, metaData, modelMethod = c("median", "sum",
+  "pgm"), oligoLen = NULL)
 }
 \arguments{
 \item{normalizedCounts}{matrix of normalized counts. Defaults to
@@ -15,7 +16,11 @@ details such as the name of genes tiled, window size, length of oligo.
 Please see oligoMeta.tab in extdata for reference.}
 
 \item{modelMethod}{The modeling method used to get nucleotide counts from
-oligo counts. Must be either sum, median or pgm.}
+oligo counts. Must be either "median", "sum", or "pgm".  Defaults to 
+"median".}
+
+\item{oligoLen}{numeric value for the length of the oligos if all oligos have
+the same value and this information is not included in the metadata file.}
 }
 \value{
 modeledNucs matrix of modeled nucleotide counts
