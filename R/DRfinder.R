@@ -1,14 +1,3 @@
-# 'DMR-finder' code adapted to find regions in OligoSignals that have differential
-# oligo reporter signal in nucleus versus cytosol signal
-
-# here maxGap parameter is meaningless since the gap between neighboring sites
-# is always one (sequencing)
-# can consider each OligoSignal as a separate 'chromosome'
-# want to increase minimum number of sites per differential region (~20?)
-
-##Loading the Necessary Libraries
-
-
 #' A function to
 #'
 #' This function performs
@@ -20,7 +9,7 @@
 #' @param ind
 #' @param order Defaults to TRUE
 #' @param minNumRegion Defaults to 5
-#' @param maxGap Defaults to 300
+#' @param maxGap 
 #' @param cutoff Defaults to quantile(abs(x), 0.99)
 #' @param assumeSorted Defaults to FALSE
 #' @param oligo.mat Defaults to oligo.mat
@@ -35,7 +24,7 @@
 # finding regions...
 regionFinder <- function(x, chr, pos, cluster=NULL, y=x,
                          ind=seq(along=x),order=TRUE, minNumRegion=5,
-                         maxGap=300, cutoff=quantile(abs(x), 0.99),
+                         maxGap, cutoff=quantile(abs(x), 0.99),
                          assumeSorted = FALSE, oligo.mat=oligo.mat,
                          verbose = TRUE,
                          design=design, workers=workers){
@@ -44,9 +33,12 @@ regionFinder <- function(x, chr, pos, cluster=NULL, y=x,
     ind <- intersect(which(!is.na(x)),ind)
   }
   if(is.null(cluster))
-    cluster <- bumphunter:::clusterMaker(chr, pos, maxGap=maxGap, assumeSorted = assumeSorted)
-  Indexes <- bumphunter:::getSegments(x = x[ind], f = cluster[ind], cutoff = cutoff,
-                         assumeSorted = assumeSorted, verbose = verbose)
+    cluster <- bumphunter:::clusterMaker(chr, pos, maxGap=maxGap, 
+                                         assumeSorted = assumeSorted)
+  Indexes <- bumphunter:::getSegments(x = x[ind], f = cluster[ind], 
+                                      cutoff = cutoff, 
+                                      assumeSorted = assumeSorted, 
+                                      verbose = verbose)
   clusterN <- table(cluster)[as.character(cluster)]
 
   # only keep up and down indices
@@ -120,13 +112,6 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr, maxGapSmooth=maxGapSmooth
                      verbose=TRUE, workers=1, minNum = minNum,
                      minInSpan = minInSpan, bpSpan = bpSpan) {
 
-  #' A function to
-  #'
-  #' This function performs
-  #' @param ix
-  #' @import
-  #' @keywords inference
-  #' @return
 
   locfitByCluster2 <- function(ix) {
 
@@ -185,13 +170,9 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr, maxGapSmooth=maxGapSmooth
   # loop through each chromosome to mitigate memory spikes
   for (chromosome in unique(chr)){
 
-    clusterC <- bumphunter:::clusterMaker(chr[chr==chromosome], x[chr==chromosome], maxGap = maxGapSmooth)
-    while (length(unique(clusterC)) < cores){
-      newGap <- maxGapSmooth*0.9
-      clusterC <- bumphunter:::clusterMaker(chr[chr==chromosome],
-                               x[chr==chromosome], maxGap = newGap)
-      maxGapSmooth <- newGap
-    }
+    clusterC <- bumphunter:::clusterMaker(chr[chr==chromosome], 
+                                          x[chr==chromosome], 
+                                          maxGap = maxGapSmooth)
 
 
     Indexes <- split(seq(along=clusterC), clusterC)
@@ -262,28 +243,27 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr, maxGapSmooth=maxGapSmooth
 #' @param pos
 #' @param cluster Defaults to NULL
 #' @param coef
-#' @param minInSpan Defaults to 70
-#' @param minNum Defaults to 70
+#' @param minInSpan Defaults to 10
+#' @param minNum Defaults to 10
 #' @param minNumRegion Defaults to 5
 #' @param cutoff Defaults to NULL
-#' @param maxGap Defaults to 500
+#' @param maxGap Defaults to 50
 #' @param maxGapSmooth Defaults to 1e8
 #' @param smooth Defaults to FALSE
-#' @param bpSpan Defaults to 1000
+#' @param bpSpan Defaults to 100
 #' @param verbose Defaults to TRUE
 #' @param workers Defaults to NULL
-#' @param loci Defaults to TRUE
-#' @param subject Defaults to TRUE
 #' @import
 #' @keywords inference
 #' @return
 
 ##The WGBS version of the 'BumphunterEngine' function with 'LM' and 'GLM'
-wgbs.bumphunter = function(oligo.mat, design, 
-                            chr = NULL, pos, coef = 2, minInSpan=70, minNum=70, minNumRegion=5,
-                            cutoff = NULL, maxGap = 500, maxGapSmooth=1e8,
-                            smooth = FALSE, bpSpan=1000,
-                            verbose = TRUE, workers=NULL, loci=TRUE, subject=TRUE, ...)
+bumphunt = function(oligo.mat, design, 
+                            chr = NULL, pos, coef = 2, minInSpan=10, minNum=10, 
+                            minNumRegion=5,
+                            cutoff = NULL, maxGap = 50, maxGapSmooth=50,
+                            smooth = FALSE, bpSpan=100,
+                            verbose = TRUE, workers=NULL, ...)
 {
   if (!is.matrix(oligo.mat))
     stop("'oligo.mat' must be a matrices.")
@@ -392,22 +372,16 @@ wgbs.bumphunter = function(oligo.mat, design,
 #' @param OligoSignal
 #' @param conditionLabels
 #' @param design
-#' @param chr Defaults to NULL
-#' @param pos
 #' @param coef
 #' @param minInSpan Defaults to 10
 #' @param minNum Defaults to 70
 #' @param minNumRegion Defaults to 5
 #' @param cutoff Defaults to NULL
-#' @param maxGap Defaults to 500
-#' @param maxGapSmooth Defaults to 1e8
 #' @param nullMethod Defaults to GLMM
 #' @param smooth Defaults to FALSE
 #' @param bpSpan Defaults to 1000
 #' @param verbose Defaults to TRUE
 #' @param workers Defaults to NULL
-#' @param loci Defaults to TRUE
-#' @param subject Defaults to TRUE
 #' @param sampleSize Defaults to (ncol(OligoSignal)-1)/2
 #' @param maxPerms 
 #' @import
@@ -418,13 +392,13 @@ wgbs.bumphunter = function(oligo.mat, design,
 DRfinder <- function(OligoSignal, 
                      conditionLabels=c("condition1", "condition2"),
                      minInSpan=10,
-                      design, chr = NULL, pos, 
+                      design,
                       coef = 2, minNum=70, bpSpan=1000, 
-                     maxGapSmooth=1e8, minNumRegion=5, 
-                      cutoff = NULL, maxGap = 500,
+                      minNumRegion=5, 
+                      cutoff = NULL, 
                       smooth = FALSE,
                       verbose = TRUE,
-                      workers = NULL, loci=TRUE, subject=TRUE, 
+                      workers = NULL, 
                      sampleSize=(ncol(OligoSignal)-1)/2,
                       maxPerms=50){
 
@@ -437,12 +411,13 @@ DRfinder <- function(OligoSignal,
   
   chr = rownames(OligoSignal)
   pos = OligoSignal[,1]
-  colnames(oligo.mat) <- sampleNames(bs)
   rm(OligoSignal)
+  
+  maxGap <- maxGapSmooth <-max(diff(pos))+1
   
   # get observed stats
 
-  res = wgbs.bumphunter(oligo.mat, 
+  res = bumphunt(oligo.mat, 
                         minInSpan=minInSpan,
                         design = design, chr = chr, pos = pos, 
                         coef = coef, minNum=minNum, maxGapSmooth=maxGapSmooth, 
@@ -450,7 +425,7 @@ DRfinder <- function(OligoSignal,
                         cutoff = cutoff, maxGap = maxGap, 
                         smooth = smooth, 
                         verbose = verbose,
-                        workers = workers, loci=loci, subject=subject) 
+                        workers = workers) 
 
 
   if (nrow(design)%%2==0){
@@ -478,7 +453,7 @@ DRfinder <- function(OligoSignal,
       designr[,2] <- 0
       designr[reorder,2] <- 1
       
-      res.flip.p = wgbs.bumphunter(oligo.mat, 
+      res.flip.p = bumphunt(oligo.mat, 
                                    minInSpan=minInSpan,
                                    design = designr, chr = chr, pos = pos, 
                                    coef = coef, minNum=minNum, 
@@ -487,8 +462,7 @@ DRfinder <- function(OligoSignal,
                                    cutoff = cutoff,  maxGap = maxGap, 
                                    smooth = smooth,
                                    verbose = verbose,
-                                   workers = workers, loci=loci, 
-                                   subject=subject) 
+                                   workers = workers) 
       res.flip.p$permNum <- j 
       
       res.flip <- rbind(res.flip, res.flip.p)
