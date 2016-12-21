@@ -9,6 +9,8 @@
 #' @param modelMethod The modeling method used to get nucleotide counts from
 #'   oligo counts. Must be either "median", "sum", or "pgm".  Defaults to 
 #'   "median".
+#' @param oligoLen numeric value for the length of the oligos if all oligos have
+#'   the same value and this information is not included in the metadata file.   
 #' @import reshape2
 #' @import dplyr
 #' @import tidyr
@@ -26,7 +28,8 @@
 ##################################################
 
 modelNucCounts <- function(normalizedCounts, metaData, 
-                           modelMethod=c("median", "sum", "pgm")){
+                           modelMethod=c("median", "sum", "pgm"),
+                           oligoLen=NULL){
   #edit the normalized counts to include oligo number & oligoID
   oligoID <- sapply(normalizedCounts$Transcript, function(x) unlist(strsplit(x, "_")))
   normalizedCounts$oligoNum <- as.numeric(sapply(oligoID, function(x) x[(length(x)-1)])) + 1
@@ -54,7 +57,15 @@ modelNucCounts <- function(normalizedCounts, metaData,
   # that the last position of the last oligo corresponds to the
   # last position of the lncRNA
   normalizedCounts$Gap <- meta$window[x]
-  normalizedCounts$oligoLen <- meta$oligoLen[x]
+  if ("oligoLen" %in% colnames(meta)){
+     normalizedCounts$oligoLen <- meta$oligoLen[x]
+  }else if (!is.null(oligoLen)){
+     normalizedCounts$oligoLen <- oligoLen
+     meta$oligoLen <- oligoLen
+  }else{
+    stop("Error: Need to specify the length of the oligos either in the
+          metadata file or using the oligoLen parameter if they are all equal")
+  }
   # add bp index (within lncRNA) to normalizedCounts
   normalizedCounts$bpStart <- (normalizedCounts$oligoNum-1)*normalizedCounts$Gap + 1
   normalizedCounts$bpEnd <- normalizedCounts$bpStart + normalizedCounts$oligoLen - 1
@@ -69,7 +80,7 @@ modelNucCounts <- function(normalizedCounts, metaData,
                                normalizedCounts$oligoID == meta$name2[ol])
     second[ol] <- which(normalizedCounts$oligoNum == 2 & normalizedCounts$oligoID == meta$name2[ol])
   }
-  normalizedCounts$bpStart[last] <- (meta$seqLen - normalizedCounts$oligoLen + 1)
+  normalizedCounts$bpStart[last] <- (meta$seqLen - normalizedCounts$oligoLen[last] + 1)
   normalizedCounts$bpEnd[last] <- meta$seqLen
 
 
@@ -83,6 +94,10 @@ modelNucCounts <- function(normalizedCounts, metaData,
   }
   numOfOligos1 == sum(meta$numOfOligos)  # (should be true)
   numOfOligos2 == sum(meta$numOfOligos)
+  
+  if (!numOfOligos1 | !numOfOligos2){
+    stop("Error: missing oligos in metadata file")
+  }
 
   # convert one row per oligo to one row per basepair
   normalizedCounts$bps <- sapply(1:nrow(normalizedCounts), function(x)
@@ -117,6 +132,7 @@ modelNucCounts <- function(normalizedCounts, metaData,
 
   # correct for the oligo that has 1/4 the overlapping oligos
   # because they are spaced out at lower resolution
+  # this needs to be robustified
   bps_model[bps_model$oligoID=="NR_002728",c(3:10)] <-
     bps_model[bps_model$oligoID=="NR_002728",c(3:10)]*4
 
@@ -136,10 +152,10 @@ modelNucCounts <- function(normalizedCounts, metaData,
     NUCS <- as.matrix(NUCS[,-1])
 
     diffMat <- apply(NUCS, 2, diff)
-    chgpts <- unique(c(seq(1,nrow(NUCS), by=gap) - 1, nrow(NUCS) - normalizedCounts$oligoLen))
-    if (normalizedCounts$oligoLen %% gap != 0){
+    chgpts <- unique(c(seq(1,nrow(NUCS), by=gap) - 1, nrow(NUCS) - meta[meta$name1==id,]$oligoLen))
+    if (meta[meta$name1==id,]$oligoLen %% gap != 0){
       starting <- seq(1,nrow(NUCS), by=gap) - 1
-      chgpts <- unique(sort(c(chgpts, starting+normalizedCounts$oligoLen)))
+      chgpts <- unique(sort(c(chgpts, starting+meta[meta$name1==id,]$oligoLen)))
       rmv <- which(chgpts > nrow(NUCS))
       if (length(rmv)>0){
         chgpts <- chgpts[-rmv]
