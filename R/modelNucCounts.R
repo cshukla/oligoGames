@@ -7,7 +7,8 @@
 #'   details such as the name of genes tiled, window size, length of oligo.
 #'   Please see oligoMeta.tab in extdata for reference.
 #' @param modelMethod The modeling method used to get nucleotide counts from
-#'   oligo counts. Must be either sum, median or pgm.
+#'   oligo counts. Must be either "median", "sum", or "pgm".  Defaults to 
+#'   "median".
 #' @import reshape2
 #' @import dplyr
 #' @import tidyr
@@ -24,7 +25,8 @@
 #       columns for "summarise"
 ##################################################
 
-modelNucCounts <- function(normalizedCounts, metaData, modelMethod){
+modelNucCounts <- function(normalizedCounts, metaData, 
+                           modelMethod=c("median", "sum", "pgm")){
   #edit the normalized counts to include oligo number & oligoID
   oligoID <- sapply(normalizedCounts$Transcript, function(x) unlist(strsplit(x, "_")))
   normalizedCounts$oligoNum <- as.numeric(sapply(oligoID, function(x) x[(length(x)-1)])) + 1
@@ -111,6 +113,8 @@ modelNucCounts <- function(normalizedCounts, metaData, modelMethod){
                   T1=sum(Total_BioRep1), T2=sum(Total_BioRep2),
                   T3=sum(Total_BioRep3), T4=sum(Total_BioRep4))
     }
+  } else {
+    message("pgm to be implemented here...")
   }
 
   # correct for the oligo that has 1/4 the overlapping oligos
