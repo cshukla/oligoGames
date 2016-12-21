@@ -42,35 +42,16 @@ def main():
 	# Check the presence of the output directory.
 	# If absent create it
 	################################################
-	print >> sys.stderr, 'Output will be stored in %s...' %(options.outDir)
-	if os.path.exists(options.outDir):
-		outDir = options.outDir
-	else:
-		os.mkdir(options.outDir)
-		outDir = options.outDir
+	
 
 	#######################################
 	# Make a hash linking each barcode,
 	# variable sequence and transcript ID
 	#######################################
-	print >> sys.stderr, 'Generating a hash mapping each barcode to a unique variable sequence and transcriptID'
-	barcodeTranscript = {}
-	for line in open(oligoMap, 'r'):
-		a = line.strip().split('\t')
-		transcriptID = a[0]
-		barcode = a[1]
-		varSeq = a[2]
-		if barcode not in barcodeTranscript:
-			barcodeTranscript[barcode] = {}
-		barcodeTranscript[barcode][varSeq] = transcriptID
+	
 
-	################################################
-	# Compute the # of times every barcode appears
-	# in the set of input FASTQ files.
-	################################################
-	print >> sys.stderr, 'Mapping the fastq files to %s\n Output will be written to %s' %(oligoSeqs, allOligoCounts)
-	print >> sys.stderr, 'This step is expected to be slow so please be patient - get a coffee or something'
-	allOligoCounts = '/'.join([outDir, 'allTranscriptsCounts.tsv'])
+	
+	allOligoCounts = 
 	barcodeCounts(fastqCase, fastqControl, labels, allOligoCounts, barcodeTranscript)
 	inputData = allOligoCounts
 
@@ -89,7 +70,44 @@ def main():
 # 	- Write counts for all oligos in each case and control fastq file
 # 	  to allOligoCounts file
 ######################################################################
-def barcodeCounts(fastqCase, fastqControl, labels, allOligoCounts, barcodeTranscript):
+def barcodeCounts(fastqCase, fastqControl, labels, oligoMap, outDir):
+	fastqCase = fastqCase.split(',')
+	fastqControl = fastqControl.split(',')
+
+	#######################################
+	# Make a hash linking each barcode,
+	# variable sequence and transcript ID
+	#######################################
+	print >> sys.stderr, 'Generating a hash mapping each barcode to a unique variable sequence and transcriptID'
+	barcodeTranscript = {}
+	for line in open(oligoMap, 'r'):
+		a = line.strip().split('\t')
+		transcriptID = a[0]
+		barcode = a[1]
+		varSeq = a[2]
+		if barcode not in barcodeTranscript:
+			barcodeTranscript[barcode] = {}
+		barcodeTranscript[barcode][varSeq] = transcriptID
+
+	################################################
+	# Check the presence of the output directory.
+	# If absent create it
+	################################################
+	print >> sys.stderr, 'Output will be stored in %s...' %(outDir)
+	if os.path.exists(outDir):
+		outDir = outDir
+	else:
+		os.mkdir(outDir)
+		outDir = outDir
+
+	allOligoCounts = '/'.join([outDir, 'allTranscriptsCounts_Raw.tsv'])
+
+	################################################
+	# Compute the # of times every barcode appears
+	# in the set of input FASTQ files.
+	################################################
+	print >> sys.stderr, 'Mapping the fastq files to %s\n Output will be written to %s' %(oligoSeqs, allOligoCounts)
+	print >> sys.stderr, 'This step is expected to be slow so please be patient - get a coffee or something'
 	print >> sys.stderr, '\n'
 	# Generate header for the output file
 	header = ['Transcript']
