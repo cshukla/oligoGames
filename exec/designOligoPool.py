@@ -4,7 +4,7 @@ import gzip, sys, itertools, os, random
 # design oligo pool
 ##############################################################
 
-def designOligoPool(regionsFile, tileSize, overlap, barcodesPerSequence, barcodesFile, univPrimers, reSeq, microSeedsFile, badNucs, numScrambles):
+def designOligoPool(regionsFile, tileSize, overlap, barcodesPerSequence, barcodesFile, univPrimers, reSeq, microSeedsFile, badNucs, numScrambles, outFile):
 
     ##############################################################
     # get all barcodes
@@ -74,6 +74,9 @@ def designOligoPool(regionsFile, tileSize, overlap, barcodesPerSequence, barcode
     ##############################################################
     #
     ##############################################################
+
+    for seq in oligoPool.keys():
+        
 
 ##############################################################
 # generate barcodes
