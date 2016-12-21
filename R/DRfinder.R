@@ -195,6 +195,8 @@ DRfinder <- function(OligoSignal,
 #'    and 7. stat = the test statistic for the condition difference.
 #' @inheritParams DRfinder
 #' @import bumphunter
+#' @import foreach
+#' @import doParallel
 #' @keywords inference
   
 ##The WGBS version of the 'BumphunterEngine' function with 'LM' and 'GLM'
@@ -344,6 +346,8 @@ bumphunt = function(oligo.mat, design,
 #'    6. length = the number of nucleotides contained in the region,
 #'    and 7. stat = the test statistic for the condition difference.
 #' @import bumphunter
+#' @import reshape2
+#' @importFrom splines ns
 #' @keywords inference
 regionFinder <- function(x, chr, pos, cluster=NULL,
                          ind=seq(along=x),order=TRUE, minNumRegion=5,
@@ -434,6 +438,8 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
 #'   indicates which nucleotides are non-NULL.
 #' @import bumphunter
 #' @import locfit
+#' @import doRNG
+#' @importFrom iterators iter
 #' @keywords inference
 smoother <- function(y, x=NULL, weights=NULL, chr=chr, 
                      maxGapSmooth=maxGapSmooth,
