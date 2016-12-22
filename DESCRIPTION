@@ -22,7 +22,11 @@ Imports:
     bumphunter,
     bsseq,
     splines,
-    doParallel
+    doParallel,
+    doRNG,
+    foreach,
+    iterators,
+    locfit
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true
