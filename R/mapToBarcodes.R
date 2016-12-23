@@ -1,28 +1,38 @@
-#' A function to map to barcodes
-#'
-#' This function allows you to map fastq files to barcodes and get counts table
-#' @param fastqCases string of comma seperated fastq files for cases
-#' @param fastqControls string of comma seperated fastq files for controls
-#' @param labels string of comma seperated labels for case and control. Defaults
-#'   to nuclear,total
-#' @param oligoMap string with the path to a file linking each barcode to a
-#'   variable sequence and transcript ID. Defaults to oligoMap.tsv
-#' @param oligoOut string with the path to the directory where all output files
-#'   will be written. If the output directory does not exist, one will be
-#'   created. Defaults to oligoOut
+#' Map case and control fastq files to unique oligo barcodes and generate counts
+#' table
+#' 
+#' This function allows you to map your sequencing files back to the oligo pool
+#' and compile a table describing counts for each oligo. For a read to map to an
+#' oligo, 2 conditions must be satisfied: (1) The first 10 nucleotides of the
+#' read should perfectly map one barcode in the pool and (2) The remaining
+#' nucleotides should have no more than 2 mismatches to the variable sequence
+#' linked with the barcode.
+#' 
+#' @param fastqCases character vector with the name of 'case' fastq files.
+#' @param fastqControls character vector with the name of 'control' fastq files.
+#' @param conditionLabels character vector of length two which contains the 
+#'   condition labels for the two conditions that are being compared. Default 
+#'   value is c("case", "control")
+#' @param oligoMap the name of the tab seperated file which provides a link 
+#'   between oligo name, barcode and variable sequence. The file should have 
+#'   columns for the name, barcode sequence and variable sequence of the oligo.
+#' @param oligoOut the name of the directory where the output file will be 
+#'   written. If the output directory does not exist, one will be created. 
+#'   Defaults to oligoOut
 #' @import rPython
 #' @keywords fastq mapping
 #' @export
+
 # @examples
-# fastqCases <- system.file("extdata", "case.fastq.gz", package = "oligoGames")
-# fastqCases <- system.file("extdata", "control.fastq.gz", package = "oligoGames")
+# fastqCases <- c(system.file("extdata", "case1.fastq.gz", package = "oligoGames"), system.file("extdata", "case2.fastq.gz", package = "oligoGames"))
+# fastqControls <- c(system.file("extdata", "control1.fastq.gz", package = "oligoGames"), system.file("extdata", "control2.fastq.gz", package = "oligoGames"))
 # oligoMap <- system.file("extdata", "oligoMap.fa", package = "oligoGames")
 # oligoOut <- system.file("extdata", "oligoOut", package = "oligoGames")
-# labels <- "nuclear,total"
-#
+# conditionLabels <- c("nuclear", "total")
+# mapToBarcodes(fastqCases, fastqControls, conditionLabels, oligoMap, oligoOut)
 
-mapToBarcodes <- function(fastqCases, fastqControls, labels="nuclear,total",
+mapToBarcodes <- function(fastqCases, fastqControls, conditionLabels=c("case", "control"),
                           oligoMap="oligoMap.fa", oligoOut="oligoOut") {
   python.load(system.file("exec", "mapToBarcodes.py", package = "oligoGames"))
-  python.call("barcodeCounts", fastqCases, fastqControls, labels, oligoMap, oligoOut)
+  python.call("barcodeCounts", fastqCases, fastqControls, conditionLabels, oligoMap, oligoOut)
 }
