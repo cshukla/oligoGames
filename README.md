@@ -1,11 +1,21 @@
 # oligoGames
 A R package to analyze data from different massively parallel reporter assays
 
-#### Argh! :tired_face: Another R package? Why did you even need to do this? :unamused: (aka "Motivation")
+#### Why do I need another R package? :unamused: (aka "Motivation")
 
-Since the early days of molecular biology, scientists have used reporter assays for different applications including studying the regulation of gene expression. While conventionally, one regulatory element is assayed at a given time, recent breakthroughs in microarray based nucleotide synthesis and next generation sequencing have allowed scientists to test several thousand elements in a single experiment. Such massively parallel reporter assays were first demonstrated in [Patwardhan R.P. *et al.* (2009)](http://www.nature.com/nbt/journal/v27/n12/abs/nbt.1589.html) and [Melnikov A. *et al.* (2012)](http://www.nature.com/nbt/journal/v30/n3/full/nbt.2137.html). Recently, there has been a flurry of papers which have used MPRA's to test potential enhancer elements, eQTL's, SNP's as well as repressive elements [[Ulirsch J.C. *et al.* (2016)](http://www.cell.com/cell/fulltext/S0092-8674(16)30493-7), [Tewhey R. *et al* (2016)](http://www.cell.com/cell/fulltext/S0092-8674(16)30421-4), [Ernst J. *et al.* (2016)](http://www.nature.com/nbt/journal/v34/n11/full/nbt.3678.html)]. Although many "games" are being played by clever scientists to deduce regulatory elements using MPRAs, currently there is no software for analyzing MPRA data. This is especially true for experiments which tile a long region of interest with short oligos to identify regulatory elements contained within.
+Since the early days of molecular biology, scientists have used reporter assays for different applications including studying the regulation of gene expression. While conventionally, one regulatory element is assayed at a given time, recent breakthroughs in microarray based nucleotide synthesis and next generation sequencing have allowed scientists to test several thousand elements in a single massively parallel reporter assay (MPRA). MPRA's were first demonstrated in [Patwardhan R.P. *et al.* (2009)](http://www.nature.com/nbt/journal/v27/n12/abs/nbt.1589.html) and [Melnikov A. *et al.* (2012)](http://www.nature.com/nbt/journal/v30/n3/full/nbt.2137.html) and the underlying technology has only become stronger and more robust in the following years. Recently, there has been a flurry of papers which have used MPRA's to test potential enhancer elements, eQTL's, SNP's as well as repressive elements - [Ulirsch J.C. *et al.* (2016)](http://www.cell.com/cell/fulltext/S0092-8674(16)30493-7), [Tewhey R. *et al* (2016)](http://www.cell.com/cell/fulltext/S0092-8674(16)30421-4), [Ernst J. *et al.* (2016)](http://www.nature.com/nbt/journal/v34/n11/full/nbt.3678.html). Although many "games" are being played by clever scientists to deduce regulatory elements using MPRAs, currently there is no dedicated software for analyzing MPRAs - which often have constraints a bit different from other *-Seq technologies. This is especially true for games which tile a long region of interest with short oligos and aim to identify regulatory elements contained within. Here, we provide the user functions for all aspects of MPRA experiments - from design of the oligo pool to learning kmers enriched in the infered regulatory elements.
 
-Here, we provide the user functions for all aspects of MPRA experiments - from design of the oligo pool to learning kmers enriched in the infered regulatory elements.
+# What is in the package
+
+The following functions are provided in the package:
+
+1. designOligoPool - Input a FASTA file of the regions you want to tile and get an output oligo arrary
+2. mapToBarcodes - Map the FASTQ files from your experiment to the barcodes and generate a table of counts for each oligo
+3. normCounts - Normalize oligo counts based on library size
+4. modelNucCounts - Model nucleotide level counts from normalized oligo level counts
+5. DRfinder - Perform inference to detect differential regions in oligo experiments
+
+Please browse the vigenttes or read the documentation to understand the learn all the available options.
 
 # Installation
 
@@ -17,24 +27,12 @@ The easiest way to install the development version directly from Github is
 devtools::install_github("oligoGames")
 ```
 
-After installation, the package can be loaded into R.
+After installation, you can load the package into R.
 ```r
 library(oligoGames)
 ```
 
 Now you are ready to play some games :)
-
-# What is in the package
-
-The following functions are provided in the package:
-
-1. designOligoPool - Input a FASTA file of the regions you want to tile and get an output oligo arrary
-2. mapToBarcodes - Map the FASTQ files from your experiment to the barcodes and generate a table of counts for each oligo
-3. normCounts - Normalize oligo counts for library size
-4. modelNucCounts - Model nucleotide level counts from normalized oligo level counts
-5. DRfinder - Perform inference to detect differential regions in oligo experiments
-
-Please browse the vigenttes or read the documentation to understand the learn all the available options.
 
 # Let's play a demo game
 
@@ -84,3 +82,12 @@ Now we are in the final round of our game and we will infer the differential reg
 ```r
 diffRegions <- DRfinder(OligoSignal, conditionLabels = c("case", "control"))
 ```
+
+# Bug reports
+Report bugs as issues on the [GitHub repository](https://github.com/cshukla/oligoGames)
+
+# Contributors
+
+* [Chinmay Shukla](https://github.com/cshukla)
+* [Keegan Korthauer](https://github.com/kdkorthauer)
+* [Rafael Irizarry](https://github.com/ririzarr)
