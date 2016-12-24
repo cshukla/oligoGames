@@ -1,32 +1,42 @@
 Package: oligoGames
+Version: 0.1.0
+Date: 2016-12-24
 Type: Package
 Title: Analyze data from massively parallel reporter assays
 Version: 0.1.0
-Author: Chinmay Shukla <cshukla@fas.harvard.edu>, Keegan Korthauer
-    <keegan@jimmy.harvard.edu>, Rafael Irizarry <rafa@jimmy.harvard.edu>
+Authors@R: c(
+    person("Chinmay", "Shukla", email = "cshukla@fas.harvard.edu", role = c("aut", "cre")), 
+    person("Keegan", "Korthauer", email = "keegan@jimmy.harvard.edu", role = "aut"), 
+    person("Rafael", "Irizarry", email = "rafa@jimmy.harvard.edu", role="aut"))
 Maintainer: Chinmay Shukla <cshukla@fas.harvard.edu>
-Description: Analyzing data from massively parallel reporter assays. Allows user
-    to design an oligo pool and generate oligo sequences, map fastq files to the
-    barcodes, model oligo count data to obtain nucleotide resolution count data and
-    finally make inferences about peak regions from the modelled data.
+Description: Analyze data from Massively Parallel Reporter Assays - MPRA's. 
+    Design an oligo pool by tiling a set of regions. Map the FASTQ files
+    generated from the experiment back to the unique barcode for each 
+    oligo and generate a counts table for all the oligos. Normalize the 
+    counts table for library size using median or quantile normalization.
+    Model nucleotide level counts from the oligo level counts using either
+    the median, sum or PGM based on overlapping oligos. Perform inference
+    on the nucleotide level counts and find differential regions by fitting
+    splines, identifying bumps and subsequently shuffling the data to get 
+    FDRs.
 Depends:
     R (>= 3.3.2)
 Imports:
-    rPython,
-    EBSeq,
-    utils,
-    dplyr,
-    reshape2,
-    tidyr,
-    GenomicRanges,
-    bumphunter,
-    bsseq,
-    splines,
-    doParallel,
-    doRNG,
-    foreach,
-    iterators,
-    locfit
+    bsseq (>= 1.10.0),
+    bumphunter (>= 1.14.0),
+    doParallel (>= 1.0.10),
+    doRNG (>= 1.6),
+    dplyr (>= 0.5.0),
+    EBSeq (>= 1.14.0),
+    foreach (>= 1.4.3),
+    GenomicRanges (>= 1.26.1),
+    iterators (>= 1.0.8),
+    locfit (>= 1.5-9.1),
+    reshape2 (>= 1.4.2),
+    rPython (>= 0.0-6),
+    splines (>= 3.3.2),
+    tidyr (>= 0.6.0),
+    utils (>= 3.3.2)
 License: GPL (>=2)
 Encoding: UTF-8
 LazyData: true
