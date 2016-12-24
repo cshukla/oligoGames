@@ -2,20 +2,22 @@
 % Please edit documentation in R/modelNucCounts.R
 \name{modelNucCounts}
 \alias{modelNucCounts}
-\title{A function to normalize counts}
+\title{Model nucleotide resolution counts from oligo counts}
 \usage{
 modelNucCounts(normalizedCounts, metaData, modelMethod = c("median", "sum",
   "pgm"), oligoLen = NULL)
 }
 \arguments{
-\item{normalizedCounts}{matrix of normalized counts. Defaults to
-allTranscripts_Norm.tab}
+\item{normalizedCounts}{matrix of normalized counts in the format returned by
+the function \code{normCounts}. Contains one row per oligo in the pool and
+one column for each sequenced replicate. The first column contains the name
+of the oligo. Defaults to allTranscripts_Norm.tab}
 
-\item{metaData}{A file with the meta data of the experiment. Should include
-details such as the name of genes tiled, window size, length of oligo.
+\item{metaData}{A file with the meta data of the experiment. Should include 
+details such as the name of genes tiled, window size, length of oligo. 
 Please see oligoMeta.tab in extdata for reference.}
 
-\item{modelMethod}{The modeling method used to get nucleotide counts from
+\item{modelMethod}{The modeling method used to get nucleotide counts from 
 oligo counts. Must be either "median", "sum", or "pgm".  Defaults to 
 "median".}
 
@@ -26,7 +28,13 @@ the same value and this information is not included in the metadata file.}
 modeledNucs matrix of modeled nucleotide counts
 }
 \description{
-This function performs library normalization for the experiment counts
+This is the main modeling function in this pakcage. We use the counts from 
+all oligos overlapping the nucleotide to model the nucleotide's counts. We 
+provide 3 options to do this: (1) Take the median of the counts of all oligos
+tiling the nucleotide, (2) Take the sum of the counts of all oligos tiling 
+the nucleotide or (3) Use a Bayesian network to model the "hidden layer" of 
+nucleotides and then using conditional inference based on the observed oligo 
+counts, obtain the nucleotide counts.
 }
 \keyword{modeling}
 
