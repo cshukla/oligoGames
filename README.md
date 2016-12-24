@@ -83,6 +83,12 @@ Now we are in the final round of our game and we will infer the differential reg
 diffRegions <- DRfinder(OligoSignal, conditionLabels = c("case", "control"))
 ```
 
+# Future Work
+
+1. Unit test for each function in the package.
+2. Functions to analyze mutation MPRAs (QSAM, Mutual Information)
+3. Robustify modelNucCounts
+
 # Bug reports
 Report bugs as issues on the [GitHub repository](https://github.com/cshukla/oligoGames)
 
