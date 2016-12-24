@@ -57,6 +57,9 @@
 #'    for multiple comparisons to control false discovery rate).
 #' @keywords inference
 #' @inheritParams bumphunt
+#' @importFrom stats model.matrix
+#' @importFrom stats p.adjust
+#' @importFrom utils combn
 #' @export
 
 DRfinder <- function(OligoSignal, 
@@ -347,8 +350,12 @@ bumphunt = function(oligo.mat, design,
 #'    and 7. stat = the test statistic for the condition difference.
 #' @import bumphunter
 #' @import reshape2
+#' @importFrom stats lm
 #' @importFrom splines ns
+#' @importFrom stats quantile
+#' @importFrom parallel mclapply
 #' @keywords inference
+
 regionFinder <- function(x, chr, pos, cluster=NULL,
                          ind=seq(along=x),order=TRUE, minNumRegion=5,
                          maxGap, cutoff=quantile(abs(x), 0.99),
@@ -440,6 +447,7 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
 #' @import locfit
 #' @import doRNG
 #' @importFrom iterators iter
+#' @importFrom stats preplot
 #' @keywords inference
 smoother <- function(y, x=NULL, weights=NULL, chr=chr, 
                      maxGapSmooth=maxGapSmooth,
