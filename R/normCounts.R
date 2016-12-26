@@ -1,11 +1,13 @@
 #' A function to normalize counts
-#'
+#' 
 #' This function performs library normalization for the experiment counts
-#' @param countsFile string with file path to the counts file. Defaults to
-#'   allTranscriptsCounts_Raw.tsv
-#' @param normType The method of library normalization the user prefers. Two
+#' @param countsFile the name of the file with counts for each oligo. Contains 
+#'   one row per oligo counts with each sample its own column. Please see 
+#'   \code{system.file("data", "allTranscriptsCounts_Raw.tab", package =
+#'   "oligoGames")} for an example. Defaults to allTranscriptsCounts_Raw.tsv
+#' @param normType The method of library normalization the user prefers. Two 
 #'   options: median or quantile. Defaults to median
-#' @param quantile The quantile the user wishs to use. Should be a number
+#' @param quantile The quantile the user wishes to use. Should be a numeric 
 #'   between 0 and 1.
 #' @keywords normalization
 #' @return normCounts matrix of normalized counts

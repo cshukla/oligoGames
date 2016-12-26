@@ -8,13 +8,15 @@ normCounts(countsFile = "allTranscriptsCounts_Raw.tsv", normType = "median",
   quantile = 0.5)
 }
 \arguments{
-\item{countsFile}{string with file path to the counts file. Defaults to
-allTranscriptsCounts_Raw.tsv}
+\item{countsFile}{the name of the file with counts for each oligo. Contains 
+one row per oligo counts with each sample its own column. Please see 
+\code{system.file("data", "allTranscriptsCounts_Raw.tab", package =
+"oligoGames")} for an example. Defaults to allTranscriptsCounts_Raw.tsv}
 
-\item{normType}{The method of library normalization the user prefers. Two
+\item{normType}{The method of library normalization the user prefers. Two 
 options: median or quantile. Defaults to median}
 
-\item{quantile}{The quantile the user wishs to use. Should be a number
+\item{quantile}{The quantile the user wishes to use. Should be a numeric 
 between 0 and 1.}
 }
 \value{
