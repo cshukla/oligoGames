@@ -1,9 +1,9 @@
 #' A function to normalize counts
 #' 
 #' This function performs library normalization for the experiment counts
-#' @param countsFile the name of the file with counts for each oligo. Contains 
+#' @param rawCounts the name of the file with counts for each oligo. Contains 
 #'   one row per oligo counts with each sample its own column. Please see 
-#'   \code{system.file("data", "allTranscriptsCounts_Raw.tab", package =
+#'   \code{system.file("inst", "extdata", "allTranscriptsCounts_Raw.tsv", package =
 #'   "oligoGames")} for an example. Defaults to allTranscriptsCounts_Raw.tsv
 #' @param normType The method of library normalization the user prefers. Two 
 #'   options: median or quantile. Defaults to median
@@ -12,9 +12,12 @@
 #' @keywords normalization
 #' @return normCounts matrix of normalized counts
 #' @export
+#' @examples 
+#' rawCounts <- system.file("inst", "extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
+#' normalizedCounts <- normalize(rawCounts, normType="median")
 
-normCounts <- function(countsFile='allTranscriptsCounts_Raw.tsv',normType='median',quantile=0.5) {
-  counts <- utils::read.table(countsFile, header=TRUE, stringsAsFactors=FALSE)
+normalize <- function(rawCounts='allTranscriptsCounts_Raw.tsv',normType='median',quantile=0.5) {
+  counts <- utils::read.table(rawCounts, header=TRUE, stringsAsFactors=FALSE)
   counts2 <- counts[,c(2:ncol(counts))]
   if (normType=='median') {
     sizes <- EBSeq::MedianNorm(counts2)
