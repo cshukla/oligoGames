@@ -3,7 +3,7 @@
 export(DRfinder)
 export(mapToBarcodes)
 export(modelNucCounts)
-export(normCounts)
+export(normalize)
 import(bumphunter)
 import(doParallel)
 import(doRNG)
