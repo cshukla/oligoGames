@@ -96,4 +96,4 @@ Report bugs as issues on the [GitHub repository](https://github.com/cshukla/olig
 
 * [Chinmay Shukla](https://github.com/cshukla)
 * [Keegan Korthauer](https://github.com/kdkorthauer)
-* [Rafael Irizarry](https://github.com/ririzarr)
+* [Rafael Irizarry](https://github.com/rafalab)
