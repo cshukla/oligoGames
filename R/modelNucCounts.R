@@ -11,7 +11,7 @@
 #' @param normalizedCounts matrix of normalized counts in the format returned by
 #'   the function \code{normCounts}. Contains one row per oligo in the pool and
 #'   one column for each sequenced replicate. The first column contains the name
-#'   of the oligo. Defaults to allTranscripts_Norm.tab
+#'   of the oligo. Defaults to \code{data("normalizedCounts")}
 #' @param metaData A file with the meta data of the experiment. Should include 
 #'   details such as the name of genes tiled, window size, length of oligo. 
 #'   Please see oligoMeta.tab in extdata for reference.
@@ -29,6 +29,10 @@
 #' @keywords modeling
 #' @return modeledNucs matrix of modeled nucleotide counts
 #' @export
+#' @examples 
+#' normalizedCounts <- data("normalizedCounts")
+#' metaData <- system.file("inst", "extdata", "oligoMeta.tsv", package="oligoGames")
+#' modeledNucs <- modelNucCounts(normalizedCounts, metaData, modelMethod="median", oligoLen=110)
 
 ##################################################
 # Things to Do:

@@ -11,7 +11,7 @@ modelNucCounts(normalizedCounts, metaData, modelMethod = c("median", "sum",
 \item{normalizedCounts}{matrix of normalized counts in the format returned by
 the function \code{normCounts}. Contains one row per oligo in the pool and
 one column for each sequenced replicate. The first column contains the name
-of the oligo. Defaults to allTranscripts_Norm.tab}
+of the oligo. Defaults to \code{data("normalizedCounts")}}
 
 \item{metaData}{A file with the meta data of the experiment. Should include 
 details such as the name of genes tiled, window size, length of oligo. 
@@ -35,6 +35,11 @@ tiling the nucleotide, (2) Take the sum of the counts of all oligos tiling
 the nucleotide or (3) Use a Bayesian network to model the "hidden layer" of 
 nucleotides and then using conditional inference based on the observed oligo 
 counts, obtain the nucleotide counts.
+}
+\examples{
+normalizedCounts <- data("normalizedCounts")
+metaData <- system.file("inst", "extdata", "oligoMeta.tsv", package="oligoGames")
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, oligoLen=110)
 }
 \keyword{modeling}
 
