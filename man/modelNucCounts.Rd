@@ -39,7 +39,7 @@ counts, obtain the nucleotide counts.
 \examples{
 normalizedCounts <- data("normalizedCounts")
 metaData <- system.file("inst", "extdata", "oligoMeta.tsv", package="oligoGames")
-modeledNucs <- modelNucCounts(normalizedCounts, metaData, oligoLen=110)
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, modelMethod="median", oligoLen=110)
 }
 \keyword{modeling}
 
