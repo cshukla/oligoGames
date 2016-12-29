@@ -2,6 +2,10 @@ import gzip, sys, itertools, os, random
 
 ##############################################################
 # design oligo pool
+#
+# Things to Do:
+#   1. Add sequence names when generating oligo pool
+#   2. Print out the meta data files automatically
 ##############################################################
 
 def designOligoPool(regionsFile, tileSize, overlap, barcodesPerSequence, barcodesFile, univPrimers, reSeq, microSeedsFile, badNucs, numScrambles, outDir):
