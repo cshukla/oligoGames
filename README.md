@@ -88,6 +88,7 @@ diffRegions <- DRfinder(OligoSignal, conditionLabels = c("case", "control"))
 1. Unit test for each function in the package.
 2. Functions to analyze mutation MPRAs (QSAM, Mutual Information)
 3. Robustify modelNucCounts
+
 ~~4. Add functionality to automatically generate metaData files when using designOligoPool~~
 
 # Bug reports
@@ -98,3 +99,5 @@ Report bugs as issues on the [GitHub repository](https://github.com/cshukla/olig
 * [Chinmay Shukla](https://github.com/cshukla)
 * [Keegan Korthauer](https://github.com/kdkorthauer)
 * [Rafael Irizarry](https://github.com/rafalab)
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=47jgoSJiB6w" target="_blank"><img src="http://img.youtube.com/vi/47jgoSJiB6w/0.jpg" alt="Immigrants (We Get The Job Done)" width="240" height="180" border="10" /></a>
