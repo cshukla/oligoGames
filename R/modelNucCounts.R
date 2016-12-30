@@ -160,8 +160,8 @@ modelNucCounts <- function(normalizedCounts, metaData, conditionLabels,
   # correct for the oligo that has 1/4 the overlapping oligos
   # because they are spaced out at lower resolution
   # this needs to be robustified
-  bps_model[bps_model$oligoID=="NR_002728",c(3:10)] <-
-    bps_model[bps_model$oligoID=="NR_002728",c(3:10)]*4
+  bps_model[bps_model$oligoID=="NR_002728",c(3:ncol(bps_model))] <-
+    bps_model[bps_model$oligoID=="NR_002728",c(3:ncol(bps_model))]*4
 
   # make one object with all lncRNA data,
   # discard basepairs with same signal by design
