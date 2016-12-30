@@ -61,6 +61,13 @@
 #' @importFrom stats p.adjust
 #' @importFrom utils combn
 #' @export
+#' @examples 
+#' normalizedCounts <- normalize(rawCounts = system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
+#' metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
+#' oligoLen <- 110
+#' conditionLabels <- c("Nuclei", "Total")
+#' modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels, modelMethod = "median", oligoLen = 110)
+#' DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, workers = 1, sampleSize = 1, maxPerms = 50)
 
 DRfinder <- function(OligoSignal, 
                      conditionLabels=c("condition1", "condition2"),
