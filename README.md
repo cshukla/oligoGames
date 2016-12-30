@@ -86,9 +86,6 @@ DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, 
 1. Unit test for each function in the package.
 2. Functions to analyze mutation MPRAs (QSAM, Mutual Information)
 
-~~3. Robustify modelNucCounts~~
-~~4. Add functionality to automatically generate metaData files when using designOligoPool~~
-
 # Bug reports
 Report bugs as issues on the [GitHub repository](https://github.com/cshukla/oligoGames)
 
