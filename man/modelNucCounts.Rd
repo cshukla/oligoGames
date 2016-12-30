@@ -4,18 +4,21 @@
 \alias{modelNucCounts}
 \title{Model nucleotide resolution counts from oligo counts}
 \usage{
-modelNucCounts(normalizedCounts, metaData, modelMethod = c("median", "sum",
-  "pgm"), oligoLen = NULL)
+modelNucCounts(normalizedCounts, metaData, conditionLabels,
+  modelMethod = c("median", "sum", "pgm"), oligoLen = NULL)
 }
 \arguments{
 \item{normalizedCounts}{matrix of normalized counts in the format returned by
-the function \code{normCounts}. Contains one row per oligo in the pool and
+the function \code{normCounts}. Contains one row per oligo in the pool and 
 one column for each sequenced replicate. The first column contains the name
 of the oligo. Defaults to \code{data("normalizedCounts")}}
 
 \item{metaData}{A file with the meta data of the experiment. Should include 
 details such as the name of genes tiled, window size, length of oligo. 
 Please see oligoMeta.tab in extdata for reference.}
+
+\item{conditionLabels}{character vector of length two which contains the 
+condition labels for the two conditions that are being compared.}
 
 \item{modelMethod}{The modeling method used to get nucleotide counts from 
 oligo counts. Must be either "median", "sum", or "pgm".  Defaults to 
@@ -37,9 +40,10 @@ nucleotides and then using conditional inference based on the observed oligo
 counts, obtain the nucleotide counts.
 }
 \examples{
-normalizedCounts <- data("normalizedCounts")
-metaData <- system.file("inst", "extdata", "oligoMeta.tsv", package="oligoGames")
-modeledNucs <- modelNucCounts(normalizedCounts, metaData, modelMethod="median", oligoLen=110)
+normalizedCounts <- normalize(rawCounts = system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
+metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
+oligoLen <- 110
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels = c("Nuclei", "Total"), modelMethod = "median", oligoLen = 110)
 }
 \keyword{modeling}
 

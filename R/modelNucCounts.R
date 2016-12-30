@@ -9,12 +9,14 @@
 #' counts, obtain the nucleotide counts.
 #' 
 #' @param normalizedCounts matrix of normalized counts in the format returned by
-#'   the function \code{normCounts}. Contains one row per oligo in the pool and
+#'   the function \code{normCounts}. Contains one row per oligo in the pool and 
 #'   one column for each sequenced replicate. The first column contains the name
 #'   of the oligo. Defaults to \code{data("normalizedCounts")}
 #' @param metaData A file with the meta data of the experiment. Should include 
 #'   details such as the name of genes tiled, window size, length of oligo. 
 #'   Please see oligoMeta.tab in extdata for reference.
+#' @param conditionLabels character vector of length two which contains the 
+#'   condition labels for the two conditions that are being compared.
 #' @param modelMethod The modeling method used to get nucleotide counts from 
 #'   oligo counts. Must be either "median", "sum", or "pgm".  Defaults to 
 #'   "median".
@@ -30,9 +32,10 @@
 #' @return modeledNucs matrix of modeled nucleotide counts
 #' @export
 #' @examples 
-#' normalizedCounts <- data("normalizedCounts")
-#' metaData <- system.file("inst", "extdata", "oligoMeta.tsv", package="oligoGames")
-#' modeledNucs <- modelNucCounts(normalizedCounts, metaData, modelMethod="median", oligoLen=110)
+#' normalizedCounts <- normalize(rawCounts = system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
+#' metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
+#' oligoLen <- 110
+#' modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels = c("Nuclei", "Total"), modelMethod = "median", oligoLen = 110)
 
 ##################################################
 # Things to Do:
@@ -41,7 +44,7 @@
 #       columns for "summarise"
 ##################################################
 
-modelNucCounts <- function(normalizedCounts, metaData, 
+modelNucCounts <- function(normalizedCounts, metaData, conditionLabels, 
                            modelMethod=c("median", "sum", "pgm"),
                            oligoLen=NULL){
   #edit the normalized counts to include oligo number & oligoID
@@ -125,21 +128,31 @@ modelNucCounts <- function(normalizedCounts, metaData,
   # can change median() calls in the next line to sum() or some other function
 
   # Generalize the number of columns here
-
+  
+  #get condition labels
+  label1 <- conditionLabels[1]
+  label2 <- conditionLabels[2]
+  
   if (modelMethod=="median") {
-    bps_model <- bps %>%
+    bps_model0 <- bps %>%
       group_by(oligoID, bps) %>%
-      summarise(N1=median(Nuclei_BioRep1), N2=median(Nuclei_BioRep2),
-                N3=median(Nuclei_BioRep3), N4=median(Nuclei_BioRep4),
-                T1=median(Total_BioRep1), T2=median(Total_BioRep2),
-                T3=median(Total_BioRep3), T4=median(Total_BioRep4))
+      summarise_each(funs(median), contains(label1, ignore.case=T))
+    bps_model1 <- bps %>%
+      group_by(oligoID, bps) %>%
+      summarise_each(funs(median), contains(label2, ignore.case=T))
+    bps_model <- merge(bps_model1, bps_model0, by=c("oligoID", "bps"))
+    bps_model <- bps_model %>%
+      arrange(oligoID, bps)
   }else if (modelMethod=="sum") {
-      bps_model <- bps %>%
-        group_by(oligoID, bps) %>%
-        summarise(N1=sum(Nuclei_BioRep1), N2=sum(Nuclei_BioRep2),
-                  N3=sum(Nuclei_BioRep3), N4=sum(Nuclei_BioRep4),
-                  T1=sum(Total_BioRep1), T2=sum(Total_BioRep2),
-                  T3=sum(Total_BioRep3), T4=sum(Total_BioRep4))
+    bps_model0 <- bps %>%
+      group_by(oligoID, bps) %>%
+      summarise_each(funs(sum), contains(label1, ignore.case=T))
+    bps_model1 <- bps %>%
+      group_by(oligoID, bps) %>%
+      summarise_each(funs(sum), contains(label2, ignore.case=T))
+    bps_model <- merge(bps_model1, bps_model0, by=c("oligoID", "bps"))
+    bps_model <- bps_model %>%
+      arrange(oligoID, bps)
   } else {
     message("pgm to be implemented here...")
   }
