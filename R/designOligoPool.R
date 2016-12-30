@@ -41,7 +41,7 @@
 #'   sequences at your own risk
 #' @param reSeq character describing the restriction enzyme site you wish to 
 #'   add. To play some games, a restriction enzyme site is neccessary but this 
-#'   is not strictly required. Defaults to NULL
+#'   is not strictly required. Defaults to ''
 #' @param microSeedsFile the name of a file with microRNA seeds. These sequences
 #'   are required to ensure they are not present in any barcodes. Please ensure 
 #'   the file is gzipped and contains one microRNA seed sequence per line. This 
@@ -73,7 +73,7 @@
 designOligoPool <- function(regionsFile, tileSize=110, overlap=10, barcodesPerSequence=1, 
                           barcodesFile='', 
                           univPrimers=c('ACTGGCCGCTTCACTG','AGATCGGAAGAGCGTCG'), 
-                          reSeq=NULL, microSeedsFile='', 
+                          reSeq='', microSeedsFile='', 
                           badNucs=c('AAA','TTT', 'CCC', 'GGG'), numScrambles=0, 
                           barcodeLen=10, outDir='lncTilingGame') {
   python.load(system.file("exec", "designOligoPool.py", package = "oligoGames"))
