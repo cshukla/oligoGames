@@ -78,7 +78,7 @@ modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels, model
 Now we are in the final round of our game and we will infer the differential regions with the help of DRfinder
 
 ```r
-DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, workers = 1, sampleSize = 1, maxPerms = 50)
+DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, workers = 1, sampleSize = 4, maxPerms = 50)
 ```
 
 # Future Work
