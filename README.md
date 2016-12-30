@@ -41,9 +41,10 @@ Here, we describe how to play a demo game. To begin playing, we first need to de
 We do this by using the designOligoPool function. We need a fasta file of sequences which are interested in tiling. Once we have that file, it is very simple to generate our oligo pool.
 
 ```r
-regionsFile <- system.file('extdata', 'lncRNAs.fa' package='oligoGames')
+regionsFile <- system.file('extdata', 'testRegions.fa' package='oligoGames')
+microSeedsFile <- system.file('extdata', 'hg19miRSeeds.txt.gz', package='oligoGames')
 outDir <- 'demoOligoGame'
-designOligoPool(regionsFile)
+designOligoPool(regionsFile, microSeedsFile, outDir)
 ```
 
 At this stage, we need to order the oligos and do the experiment (likely several times because it never works the first time). Since this is a demo game, we are going to fast forward the 2.5 long years which we spent doing this and assume we have the sequencing data.
@@ -52,11 +53,8 @@ Next, we map the data to our oligo barcodes with the mapToBarcodes function.
 
 ```r
 fastqCases <- c(system.file('extdata', 'fastqFiles', 'case1.fastq.gz', package='oligoGames'), system.file('extdata', 'fastqFiles', 'case2.fastq.gz', package='oligoGames'))
-
 fastqControl <- c(system.file('extdata', 'fastqFiles', 'control1.fastq.gz', package='oligoGames'), system.file('extdata', 'fastqFiles', 'control2.fastq.gz', package='oligoGames'))
-
 oligoMap <- system.file('extdata', 'lncLocOligoPool.fa' package='oligoGames')
-
 mapToBarcodes(fastqCases, fastqControls, oligoMap, demoOligoGame)
 
 ```
@@ -64,23 +62,23 @@ mapToBarcodes(fastqCases, fastqControls, oligoMap, demoOligoGame)
 Our next step is to normalize the counts for library size. We use the normCounts function for this.
 
 ```r
-countsFile <- "demoOligoGame/allTranscriptsCounts_Raw.tsv"
-
-normalizedCounts <- normCounts(countsFile, normType = "median")
+rawCounts <- system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
+normalizedCounts <- normalize(rawCounts, normType='median')
 ```
 
 We will now go from oligo counts to nucleotide level counts using modelNucCounts. 
 
 ```r
-metaData <- system.file('extdata', 'oligoMeta.tab' package='oligoGames')
-
-OligoSignal <- modelNucCounts(normalizedCounts, metaData, modelMethod = "median", oligoLen = 110)
+metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
+conditionLabels <- c("Nuclei", "Total")
+oligoLen <- 110
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels, modelMethod = "median", oligoLen)
 ```
 
 Now we are in the final round of our game and we will infer the differential regions with the help of DRfinder
 
 ```r
-diffRegions <- DRfinder(OligoSignal, conditionLabels = c("case", "control"))
+DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, workers = 1, sampleSize = 1, maxPerms = 50)
 ```
 
 # Future Work
@@ -88,8 +86,8 @@ diffRegions <- DRfinder(OligoSignal, conditionLabels = c("case", "control"))
 1. Unit test for each function in the package.
 2. Functions to analyze mutation MPRAs (QSAM, Mutual Information)
 
-~~3. Robustify modelNucCounts
-4. Add functionality to automatically generate metaData files when using designOligoPool~~
+~~3. Robustify modelNucCounts~~
+~~4. Add functionality to automatically generate metaData files when using designOligoPool~~
 
 # Bug reports
 Report bugs as issues on the [GitHub repository](https://github.com/cshukla/oligoGames)
