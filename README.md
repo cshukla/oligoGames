@@ -52,8 +52,10 @@ At this stage, we need to order the oligos and do the experiment (likely several
 Next, we map the data to our oligo barcodes with the mapToBarcodes function.
 
 ```r
-fastqCases <- c(system.file('extdata', 'fastqFiles', 'case1.fastq.gz', package='oligoGames'), system.file('extdata', 'fastqFiles', 'case2.fastq.gz', package='oligoGames'))
-fastqControl <- c(system.file('extdata', 'fastqFiles', 'control1.fastq.gz', package='oligoGames'), system.file('extdata', 'fastqFiles', 'control2.fastq.gz', package='oligoGames'))
+fastqCases <- c(system.file('extdata', 'fastqFiles', 'case1.fastq.gz', package='oligoGames'), 
+system.file('extdata', 'fastqFiles', 'case2.fastq.gz', package='oligoGames'))
+fastqControl <- c(system.file('extdata', 'fastqFiles', 'control1.fastq.gz', package='oligoGames'), 
+system.file('extdata', 'fastqFiles', 'control2.fastq.gz', package='oligoGames'))
 oligoMap <- system.file('extdata', 'lncLocOligoPool.fa' package='oligoGames')
 mapToBarcodes(fastqCases, fastqControls, oligoMap, demoOligoGame)
 
@@ -72,13 +74,16 @@ We will now go from oligo counts to nucleotide level counts using modelNucCounts
 metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
 conditionLabels <- c("Nuclei", "Total")
 oligoLen <- 110
-modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels, modelMethod = "median", oligoLen)
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels, 
+modelMethod = "median", oligoLen)
 ```
 
 Now we are in the final round of our game and we will infer the differential regions with the help of DRfinder
 
 ```r
-DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, workers = 1, sampleSize = 1, maxPerms = 50)
+DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, 
+bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, 
+verbose = TRUE, workers = 1, sampleSize = 1, maxPerms = 50)
 ```
 
 # Future Work
