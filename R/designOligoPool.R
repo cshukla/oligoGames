@@ -45,8 +45,7 @@
 #' @param microSeedsFile the name of a file with microRNA seeds. These sequences
 #'   are required to ensure they are not present in any barcodes. Please ensure 
 #'   the file is gzipped and contains one microRNA seed sequence per line. This 
-#'   is a required parameter if \code{barcodeFile} is not given. Default value 
-#'   is ''
+#'   is a required parameter if \code{barcodeFile} is not given. 
 #' @param badNucs character vector with potential sub strings you wish to avoid 
 #'   in barcodes. For example, triple N's are hard to PCR and so it is a good 
 #'   idea to avoid them in barcodes. This option is highly recommended if 
@@ -64,16 +63,18 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' regionsFile <- system.file('extdata', 'testRegions.fa' package='oligoGames')
+#' regionsFile <- system.file("extdata", "testRegions.fa", package='oligoGames')
 #' microSeedsFile <- system.file('extdata', 'hg19miRSeeds.txt.gz', package='oligoGames')
 #' outDir <- 'demoOligoGame'
-#' designOligoPool(regionsFile, microSeedsFile, outDir)
+#' designOligoPool(regionsFile = regionsFile, tileSize = 110, overlap = 10, 
+#' barcodesPerSequence = 1, barcodesFile = '', microSeedsFile = microSeedsFile, 
+#' reSeq = '', numScrambles = 0, barcodeLen = 10, outDir = outDir)
 #' }
 
 designOligoPool <- function(regionsFile, tileSize=110, overlap=10, barcodesPerSequence=1, 
                           barcodesFile='', 
                           univPrimers=c('ACTGGCCGCTTCACTG','AGATCGGAAGAGCGTCG'), 
-                          reSeq='', microSeedsFile='', 
+                          reSeq='', microSeedsFile, 
                           badNucs=c('AAA','TTT', 'CCC', 'GGG'), numScrambles=0, 
                           barcodeLen=10, outDir='lncTilingGame') {
   python.load(system.file("exec", "designOligoPool.py", package = "oligoGames"))
