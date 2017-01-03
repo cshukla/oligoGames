@@ -81,18 +81,19 @@ modelMethod = "median", oligoLen)
 Now we are in the final round of our game and we will infer the differential regions with the help of DRfinder
 
 ```r
+<<<<<<< HEAD
 DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, 
 bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, 
 verbose = TRUE, workers = 1, sampleSize = 1, maxPerms = 50)
+=======
+DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, workers = 1, sampleSize = 4, maxPerms = 50)
+>>>>>>> 49384730ff0f5e5c12aef29d24768baa316df927
 ```
 
 # Future Work
 
 1. Unit test for each function in the package.
 2. Functions to analyze mutation MPRAs (QSAM, Mutual Information)
-
-~~3. Robustify modelNucCounts~~
-~~4. Add functionality to automatically generate metaData files when using designOligoPool~~
 
 # Bug reports
 Report bugs as issues on the [GitHub repository](https://github.com/cshukla/oligoGames)
