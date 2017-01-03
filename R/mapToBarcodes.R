@@ -24,11 +24,13 @@
 #' @export
 
 # @examples
-# fastqCases <- c(system.file("extdata", "case1.fastq.gz", package = "oligoGames"), system.file("extdata", "case2.fastq.gz", package = "oligoGames"))
-# fastqControls <- c(system.file("extdata", "control1.fastq.gz", package = "oligoGames"), system.file("extdata", "control2.fastq.gz", package = "oligoGames"))
+# fastqCases <- c(system.file("extdata", "case1.fastq.gz", package = "oligoGames"), 
+# system.file("extdata", "case2.fastq.gz", package = "oligoGames"))
+# fastqControls <- c(system.file("extdata", "control1.fastq.gz", package = "oligoGames"), 
+# system.file("extdata", "control2.fastq.gz", package = "oligoGames"))
 # oligoMap <- system.file("extdata", "oligoMap.fa", package = "oligoGames")
 # oligoOut <- system.file("extdata", "oligoOut", package = "oligoGames")
-# conditionLabels <- c("nuclear", "total")
+# conditionLabels <- c("Nuclei", "Total")
 # mapToBarcodes(fastqCases, fastqControls, conditionLabels, oligoMap, oligoOut)
 
 mapToBarcodes <- function(fastqCases, fastqControls, conditionLabels=c("case", "control"),

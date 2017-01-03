@@ -32,16 +32,16 @@
 #' @return modeledNucs matrix of modeled nucleotide counts
 #' @export
 #' @examples 
-#' normalizedCounts <- normalize(rawCounts = system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
+#' normalizedCounts <- normalize(rawCounts = system.file("extdata", 
+#' "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
 #' metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
 #' oligoLen <- 110
-#' modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels = c("Nuclei", "Total"), modelMethod = "median", oligoLen = 110)
+#' modeledNucs <- modelNucCounts(normalizedCounts, metaData, 
+#' conditionLabels = c("Nuclei", "Total"), modelMethod = "median", oligoLen = 110)
 
 ##################################################
 # Things to Do:
 #   1). Implement a PGM to model nucleotide counts
-#   2). Extend the function to recognize the # of
-#       columns for "summarise"
 ##################################################
 
 modelNucCounts <- function(normalizedCounts, metaData, conditionLabels, 
