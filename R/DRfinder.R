@@ -254,16 +254,16 @@ bumphunt = function(oligo.mat, design,
   if (is.factor(chr))
     chr <- as.character(chr)
   
-  cluster <- bumphunter::clusterMaker(chr, pos, maxGap = maxGap)
+  cluster <- bumphunter:::clusterMaker(chr, pos, maxGap = maxGap)
   
   if (verbose)
     message("Computing coefficients.")
   
   if(logT){
-    est <- bumphunter::.getEstimate(log2(oligo.mat+1), 
+    est <- bumphunter:::.getEstimate(log2(oligo.mat+1), 
                                      design, coef, full=TRUE) 
   }else{
-    est <- bumphunter::.getEstimate(oligo.mat, 
+    est <- bumphunter:::.getEstimate(oligo.mat, 
                                      design, coef, full=TRUE) 
   }
   rawBeta <- est$coef
@@ -380,9 +380,9 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
     ind <- intersect(which(!is.na(x)),ind)
   }
   if(is.null(cluster))
-    cluster <- bumphunter::clusterMaker(chr, pos, maxGap=maxGap, 
+    cluster <- bumphunter:::clusterMaker(chr, pos, maxGap=maxGap, 
                                          assumeSorted = assumeSorted)
-  Indexes <- bumphunter::getSegments(x = x[ind], f = cluster[ind], 
+  Indexes <- bumphunter:::getSegments(x = x[ind], f = cluster[ind], 
                                       cutoff = cutoff, 
                                       assumeSorted = assumeSorted, 
                                       verbose = verbose)
@@ -526,7 +526,7 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
   # loop through each chromosome to mitigate memory spikes
   for (chromosome in unique(chr)){
 
-    clusterC <- bumphunter::clusterMaker(chr[chr==chromosome], 
+    clusterC <- bumphunter:::clusterMaker(chr[chr==chromosome], 
                                           x[chr==chromosome], 
                                           maxGap = maxGapSmooth)
 
@@ -560,7 +560,7 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
 
     attributes(ret)[["rng"]] <- NULL
     ## Paste together results from different workers
-    ret <- bumphunter::reduceIt(ret)
+    ret <- bumphunter:::reduceIt(ret)
 
     if(is.null(ret.all)){
       ret.all <- ret
