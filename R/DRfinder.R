@@ -148,7 +148,7 @@ DRfinder <- function(OligoSignal,
                             smooth = smooth,
                             verbose = verbose,
                             workers = workers, logT=logT) 
-      if (length(res.flip.p)>0){
+      if (!is.na(res.flip.p)){
         res.flip.p$permNum <- j 
         res.flip <- rbind(res.flip, res.flip.p)
       }
