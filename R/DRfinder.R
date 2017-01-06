@@ -148,9 +148,10 @@ DRfinder <- function(OligoSignal,
                             smooth = smooth,
                             verbose = verbose,
                             workers = workers, logT=logT) 
-      res.flip.p$permNum <- j 
-      
-      res.flip <- rbind(res.flip, res.flip.p)
+      if (length(res.flip.p)>0){
+        res.flip.p$permNum <- j 
+        res.flip <- rbind(res.flip, res.flip.p)
+      }
       print(paste0(j, " out of ", ncol(perms), " permutations completed"))
     }	
   }else{
