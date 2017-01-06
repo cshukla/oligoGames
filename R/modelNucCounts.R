@@ -48,7 +48,7 @@ modelNucCounts <- function(normalizedCounts, metaData, conditionLabels,
                            modelMethod=c("median", "sum", "pgm"),
                            oligoLen=NULL){
   #edit the normalized counts to include oligo number & oligoID
-  oligoID <- sapply(normalizedCounts$Transcript, function(x) unlist(strsplit(x, "_")))
+  oligoID <- lapply(normalizedCounts$Transcript, function(x) unlist(strsplit(x, "_")))
   normalizedCounts$oligoNum <- as.numeric(sapply(oligoID, function(x) x[(length(x)-1)])) + 1
   oligoID <- sapply(oligoID, function(x) x[-c((length(x)-1):length(x))])
   oligoID <- sapply(oligoID, function(x) paste(x, collapse="_"))
