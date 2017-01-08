@@ -1,0 +1,27 @@
+---
+title: "demoOligoGame"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analyze data from demo game
+
+```{r analyzeData}
+rawCounts <- "~/Documents/Research/testCounts_BigGame.tsv"
+normalizedCounts <- normalize(rawCounts)
+metaFile <- "~/Documents/Research/testMeta_BigGame.tsv"
+conditionLabels <- c("Nucleus", "Total")
+OligoSignal_sum <- modelNucCounts(normalizedCounts, metaData = metaFile,
+                                  conditionLabels, modelMethod = "sum", 
+                                  oligoLen = 110)
+DRregions_sum <- DRfinder(OligoSignal_sum, conditionLabels, 
+                          minInSpan = 5, bpSpan = 50, minNumRegion = 3, 
+                          cutoff = 0.05, smooth = TRUE, verbose = TRUE, 
+                          workers = 1, sampleSize = 3, maxPerms = 50, logT = FALSE)
+DRregions_sum_filtered <- DRregions_sum %>% 
+    filter(pval<=0.1 & stat >= 0) %>% 
+    arrange(chr)
+```
