@@ -5,6 +5,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(oligoGames)
+library(dplyr)
 ```
 
 ## Analyze data from demo game
@@ -22,6 +24,22 @@ DRregions_sum <- DRfinder(OligoSignal_sum, conditionLabels,
                           cutoff = 0.05, smooth = TRUE, verbose = TRUE, 
                           workers = 1, sampleSize = 3, maxPerms = 50, logT = FALSE)
 DRregions_sum_filtered <- DRregions_sum %>% 
+    filter(pval<=0.1 & stat >= 0) %>% 
+    arrange(chr)
+
+
+rawCounts <- "~/Documents/Research/testCounts_BigGame.tsv"
+normalizedCounts <- normalize(rawCounts)
+metaFile <- "~/Documents/Research/testMeta_BigGame.tsv"
+conditionLabels <- c("Nucleus", "Total")
+OligoSignal_median <- modelNucCounts(normalizedCounts, metaData = metaFile,
+                                  conditionLabels, modelMethod = "sum", 
+                                  oligoLen = 110)
+DRregions_median <- DRfinder(OligoSignal_median, conditionLabels, 
+                          minInSpan = 5, bpSpan = 50, minNumRegion = 3, 
+                          cutoff = 0.05, smooth = TRUE, verbose = TRUE, 
+                          workers = 1, sampleSize = 3, maxPerms = 50, logT = FALSE)
+DRregions_median_filtered <- DRregions_median %>% 
     filter(pval<=0.1 & stat >= 0) %>% 
     arrange(chr)
 ```
