@@ -32,7 +32,7 @@
 #' @return modeledNucs matrix of modeled nucleotide counts
 #' @export
 #' @examples 
-#' normalizedCounts <- normalize(rawCounts = system.file("extdata", 
+#' normalizedCounts <- normCounts(rawCounts = system.file("extdata", 
 #' "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
 #' metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
 #' oligoLen <- 110
