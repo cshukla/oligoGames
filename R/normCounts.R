@@ -14,9 +14,9 @@
 #' @export
 #' @examples 
 #' rawCounts = system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
-#' normalizedCounts <- normalize(rawCounts, normType='median')
+#' normalizedCounts <- normCounts(rawCounts, normType='median')
 
-normalize <- function(rawCounts='allTranscriptsCounts_Raw.tsv',normType='median',quantile=0.5) {
+normCounts <- function(rawCounts='allTranscriptsCounts_Raw.tsv',normType='median',quantile=0.5) {
   counts <- utils::read.table(rawCounts, header=TRUE, stringsAsFactors=FALSE)
   counts2 <- counts[,c(2:ncol(counts))]
   if (normType=='median') {
