@@ -24,7 +24,7 @@ Currently, oligoGames is under development and we recommend you contact us [here
 The easiest way to install the development version directly from Github is 
 
 ```r
-devtools::install_github("oligoGames")
+devtools::install_github("cshukla/oligoGames")
 ```
 
 After installation, you can load the package into R.
@@ -68,7 +68,7 @@ rawCounts <- system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "o
 normalizedCounts <- normalize(rawCounts, normType='median')
 ```
 
-We will now go from oligo counts to nucleotide level counts using modelNucCounts. 
+We will now go from oligo counts to nucleotide level counts using modelNucCounts. One thing to note here is that the name of the transcripts should be similarly formated as thed default data shown below. Read the documentation of `modelNucCounts` for more info.
 
 ```r
 metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
