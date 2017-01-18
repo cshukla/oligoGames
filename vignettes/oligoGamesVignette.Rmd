@@ -1,0 +1,16 @@
+---
+title: "oligoGamesVignette"
+author: "Chinmay Shukla"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{oligoGamesVignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+date: "1/18/2017"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Oligo Games
