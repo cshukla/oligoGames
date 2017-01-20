@@ -13,13 +13,13 @@ date: "1/18/2017"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Oligo Games
+# Oligo Games
 
 This vignette documents the functions provided in oligoGames. I start with a function to design the oligo pool and take the user through the end of the game - when you learn kmers important for a particular cellular role. Here, I provide mainly high-level overview of the functions and I recommend the user to browse the low-level details using `?function` for example: `?modelNucCounts` to learn more about how we model nucleotide level counts from oligo level counts.. If something is confusing, please let me know and I will make every attempt to clarify it.
 
 Now, let's play a simple game.
 
-#### Level 1 - Design an Oligo Pool from a set of sequences
+## Level 1 - Design an Oligo Pool from a set of sequences
 
 In level one, we design the oligo pool by tiling regions whose activity we wish to understand. For example, lets say you want to find nuclear localization elements in long non coding RNAs (lncRNAs). In this case, your oligo pool would invovle tiling cDNAs of lncRNA genes with oligos of fixed length. To each oligo we need to add a unique barcode which we can sequence and match to the oligo as well as forward and reverse universal primers for making sequencing libraries using PCR. We provide a simple function - designOligoPool for this purpose.
 
@@ -33,3 +33,13 @@ designOligoPool(regionsFile = regionsFile, tileSize = 110, overlap = 10,
                 barcodesPerSequence = 1, barcodesFile = '', microSeedsFile = microSeedsFile, 
                 reSeq = '', numScrambles = 0, barcodeLen = 10, outDir = outDir)
 ```
+
+## Level 2 - Uniquely map FASTQ reads to barcodes and obtain oligo counts
+
+## Level 3 - Normalize oligo counts
+
+## Level 4 - Model nucleotide counts from oligo counts
+
+## Level 5 - Identify regions with differential nucleotide counts
+
+## Level 6 - Learn k-mers enriched in regions identified in previous level
