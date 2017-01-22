@@ -38,8 +38,26 @@ designOligoPool(regionsFile = regionsFile, tileSize = 110, overlap = 10,
 
 ## Level 3 - Normalize oligo counts
 
+Once we uniquely map the reads to the barcodes, our next challenge is to normalize the read counts across samples to account for difference in library sizes i.e. sequencing depth. For this, we provide the `normCounts` function which inputs a matrix with raw oligo counts and outputs a matrix of normalized oligo counts. 
+
+```{r Normalization}
+rawCounts <- system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
+normalizedCounts <- normCounts(rawCounts, normType='median')
+```
+
 ## Level 4 - Model nucleotide counts from oligo counts
 
+```{r Model Nucleotide Counts}
+metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
+oligoLen <- 110
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, 
+                              conditionLabels = c("Nuclei", "Total"), 
+                              modelMethod = "median", oligoLen = 110)
+```
+
 ## Level 5 - Identify regions with differential nucleotide counts
+
+```{r Infer Differential Regions}
+```
 
 ## Level 6 - Learn k-mers enriched in regions identified in previous level
