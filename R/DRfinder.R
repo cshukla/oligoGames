@@ -42,6 +42,9 @@
 #' @param maxPerms a positive integer that represents the maximum number 
 #'    of permutations that will be used to generate the global null 
 #'    distribution of test statistics.
+#' @param onlyUp a logical value indicating whether to only consider differences
+#'    in the positive direction (signal in condition 1 - condition 2 > 0). 
+#'    Default value is FALSE.
 #' @return a data.frame that contains the results of the inference. The
 #'    data.frame contains one row for each candidate region, and 
 #'    9 columns, in the following order: 1. chr = 
@@ -85,7 +88,8 @@ DRfinder <- function(OligoSignal,
                      verbose = TRUE,
                      workers = NULL, 
                      sampleSize=(ncol(OligoSignal)-1)/2,
-                     maxPerms=50, logT=TRUE,coef=2){
+                     maxPerms=50, logT=TRUE,coef=2, 
+                     onlyUp=FALSE){
   
   cond <- c(rep(conditionLabels[1], sampleSize), 
             rep(conditionLabels[2], sampleSize))
@@ -111,7 +115,11 @@ DRfinder <- function(OligoSignal,
                  smooth = smooth, 
                  verbose = verbose,
                  workers = workers, logT=logT) 
-  
+
+  if (onlyUp){
+    # only keep regions with positive directionality
+    res <- res[res$stat > 0,]
+  }
   
   if (nrow(design)%%2==0){
     perms <- combn(seq(1, nrow(design)), sampleSize)
@@ -148,9 +156,11 @@ DRfinder <- function(OligoSignal,
                             smooth = smooth,
                             verbose = verbose,
                             workers = workers, logT=logT) 
-      if (length(res.flip.p)==1){
-        res.flip.p$permNum <- j 
-        res.flip <- rbind(res.flip, res.flip.p)
+      if (class(res.flip.p)=="data.frame"){
+        if (nrow(res.flip.p) > 0){
+          res.flip.p$permNum <- j 
+          res.flip <- rbind(res.flip, res.flip.p)
+        }
       }
       print(paste0(j, " out of ", ncol(perms), " permutations completed"))
     }	
@@ -158,14 +168,15 @@ DRfinder <- function(OligoSignal,
     stop("Error: Currently only balanced designs supported")
   }
   rm(res.flip.p)
-  
-  perm.ordered <- c(sort(abs(res$stat), method="quick"), Inf)
+
+  perm.ordered <- c(sort(abs(res.flip$stat), method="quick"), Inf)
   pval <- rep(NA, nrow(res))
   pval[!is.na(res$stat)] <- (1 + 
                                sapply(abs(res$stat[!is.na(res$stat)]), 
                                       function(x) length(perm.ordered) - 
                                         min(which(x <= perm.ordered)))) /
-    (1 + sum(!is.na(res$stat)))							
+    (1 + sum(!is.na(res.flip$stat)))							
+  
   res$pval <- pval
   res$qval <- p.adjust(pval, method="BH")
   return(res)
@@ -412,7 +423,24 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
     Y$X <- X
     Y$L <- L
     int.knots <- ceiling((max(pos[ix]) - min(pos[ix])) / 100) + 1
-    return(summary(lm(value~ X + ns(L, df=int.knots), data=Y))$coef[2,3])
+    
+    # linear trend
+    trend.linear <- lm(value ~ ns(L, df=int.knots-1), data=Y)
+    
+    # polynomial trend
+    trend.poly <- lm(value ~ ns(L, df=int.knots), data=Y)
+    
+    # adaptively determine usage of spline adjustment (use none if no
+    # evidence of trend in the region to guard against over-fitting)
+    if(anova(trend.poly)[1,5] < 0.01){
+      stat <- summary(lm(value~ X + ns(L, df=int.knots), data=Y))$coef[2,3]
+    }else if(anova(trend.linear)[1,5] < 0.01){
+      stat <- summary(lm(value~ X + ns(L, df=int.knots-1), data=Y))$coef[2,3]
+    }else{
+      stat <- summary(lm(value~ X, data=Y))$coef[2,3]
+    }
+
+    return(stat)
   }
 
   cov.upper <- quantile(oligo.mat, 0.9)
@@ -435,7 +463,7 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
   t2 - t1
   names(res) <- c("up","dn")
   res <- rbind(res$up,res$dn)
-  if(order & nrow(res)>0) res <- res[order(-res$stat),]
+  if(order & nrow(res)>0) res <- res[order(-abs(res$stat)),]
 
   return(res)
 }

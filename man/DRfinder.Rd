@@ -8,7 +8,7 @@ DRfinder(OligoSignal, conditionLabels = c("condition1", "condition2"),
   minInSpan = 10, bpSpan = 100, minNumRegion = 5, cutoff = NULL,
   smooth = FALSE, verbose = TRUE, workers = NULL,
   sampleSize = (ncol(OligoSignal) - 1)/2, maxPerms = 50, logT = TRUE,
-  coef = 2)
+  coef = 2, onlyUp = FALSE)
 }
 \arguments{
 \item{OligoSignal}{a data frame in the format returned by the function
@@ -59,6 +59,10 @@ function, or if distribution of raw values looks relatively symmetric.}
 
 \item{coef}{positive integer that indicates which column of the design
 matrix in \code{design} contains the condition covariate of interest}
+
+\item{onlyUp}{a logical value indicating whether to only consider differences
+in the positive direction (signal in condition 1 - condition 2 > 0). 
+Default value is FALSE.}
 }
 \value{
 a data.frame that contains the results of the inference. The
