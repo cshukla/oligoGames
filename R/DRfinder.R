@@ -63,7 +63,7 @@
 #' @export
 #' @examples 
 #' \dontrun{
-#' normalizedCounts <- normalize(rawCounts = system.file("extdata", 
+#' normalizedCounts <- normCounts(rawCounts = system.file("extdata", 
 #' "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
 #' metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
 #' oligoLen <- 110

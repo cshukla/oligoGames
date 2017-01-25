@@ -11,7 +11,12 @@
 #' @param normalizedCounts matrix of normalized counts in the format returned by
 #'   the function \code{normCounts}. Contains one row per oligo in the pool and 
 #'   one column for each sequenced replicate. The first column contains the name
-#'   of the oligo. Defaults to \code{data("normalizedCounts")}
+#'   of the oligo. Make sure that the name of the transcript is in the same 
+#'   format as described in 'allTranscriptsCounts_Raw.tsv'. Briefly, format is 
+#'   "GeneName_oligoNum_Barcode". It is critical that oligoNum is second to last
+#'   and separated by "_" otherwise parsing won't work properly. You can have 
+#'   any string downstream of oligoNum separated by _. Generally, people use 
+#'   barcode but it is not necessary to use the barcode.
 #' @param metaData A file with the meta data of the experiment. Should include 
 #'   details such as the name of genes tiled, window size, length of oligo. 
 #'   Please see oligoMeta.tab in extdata for reference.
@@ -32,7 +37,7 @@
 #' @return modeledNucs matrix of modeled nucleotide counts
 #' @export
 #' @examples 
-#' normalizedCounts <- normalize(rawCounts = system.file("extdata", 
+#' normalizedCounts <- normCounts(rawCounts = system.file("extdata", 
 #' "allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
 #' metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
 #' oligoLen <- 110
