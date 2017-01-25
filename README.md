@@ -61,7 +61,7 @@ mapToBarcodes(fastqCases, fastqControls, oligoMap, demoOligoGame)
 
 ```
 
-Our next step is to normalize the counts for library size. We use the normCounts function for this.
+Our next step is to normalize the counts for library size. We use the normCounts function for this. Please note that we only need to provide the location of the unnormalized counts. The function automatically reads this file and returns a normalized counts matrix.
 
 ```r
 rawCounts <- system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
@@ -69,6 +69,8 @@ normalizedCounts <- normalize(rawCounts, normType='median')
 ```
 
 We will now go from oligo counts to nucleotide level counts using modelNucCounts. One thing to note here is that the name of the transcripts should be similarly formated as thed default data shown below. Read the documentation of `modelNucCounts` for more info.
+
+Also, similar to the unnormalized counts file you only need to provide a path to your meta data file. The function will automatically open and read the file.
 
 ```r
 metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
