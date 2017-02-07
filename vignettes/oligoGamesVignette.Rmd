@@ -27,6 +27,7 @@ We will use different packages in this vignette so to begin we must load all of 
 library(oligoGames)
 library(readr)
 library(ggplot2)
+library(dplyr)
 ```
 
 ## Level 1 - Design an Oligo Pool from a set of sequences
@@ -50,7 +51,7 @@ designOligoPool(regionsFile = regionsFile, tileSize = 110, overlap = 10,
 
 Once we uniquely map the reads to the barcodes, our next challenge is to normalize the read counts across samples to account for difference in library sizes i.e. sequencing depth. For this, we provide the `normCounts` function which inputs a matrix with raw oligo counts and outputs a matrix of normalized oligo counts. 
 
-Also, please note the format of `rawCounts` which we input to this function. It contains one column for the names of transcripts i.e. oligos and then 1 column each for every sample we sequenced for this game. While it is not important for the first column to be named "Transcript" for this particular function, it is crucial for the downstream functions and so we recommend you to adhere to this formatting strictly. The replicate number is directly appended to the sample type i.e. "Nucleus1", "Nucleus2" etc. We also request the user to first provide all replicates of a given condition and only then proceed to the next condition. For example, we prefer columns be ordered "Nucleus1", "Nucleus2", "Nucleus3", "Total1", "Total2", "Total3" rather than "Nucleu1", "Total1", "Nucleus2", "Total2", "Nucleus3", "Total3"
+Also, please note the format of `rawCounts` which we input to this function. It contains one column for the names of transcripts i.e. oligos and then 1 column each for every sample we sequenced for this game. While it is not important for the first column to be named "Transcript" for this particular function, it is crucial for the downstream functions and so we recommend you to adhere to this formatting strictly. The replicate number is directly appended to the sample type i.e. "Nucleus1", "Nucleus2" etc. We also request the user to first provide all replicates of a given condition and only then proceed to the next condition. For example, we prefer columns be ordered "Nucleus1", "Nucleus2", "Nucleus3", "Total1", "Total2", "Total3" rather than "Nucleu1", "Total1", "Nucleus2", "Total2", "Nucleus3", "Total3".
 
 ```{r Normalization}
 rawCounts <- read_tsv(system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"), col_names = T)
@@ -60,15 +61,28 @@ normalizedCounts <- normCounts(rawCounts, normType='median')
 
 ## Level 4 - Model nucleotide counts from oligo counts
 
-Next, we go from oligo counts to nucleotide counts. Each nucleotide is tiled by several different oligos and hence we can use different approaches to model nucleotide counts from the corresponding oligo counts. A simple approach might be 
+Next, we go from oligo counts to nucleotide counts. In our package, we use the `modelNucCounts` function for this functionality. This function inputs the matrix obtained by `normCounts` function along with a meta data file containing high level information about our oligo pool to obtain the modeled nucleotide counts. Let us take a look at the meta data file.
+
+```{r metaData}
+metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
+meta <- read_tsv(metaData, col_names = T)
+meta
+
+```
+
+We see that we need to given the name of each region in our oligo pool in a column titled `name`. Besides, we need to specify the starting barcode index for each region - `startBarcodeIndex`, number of oligos tiling the region - `numOfOligos`, the length of the region - `seqLen` as well as the overlap b/w neighboring oligos `window` and the length of the variable sequence in each oligo - `oligoLen`.
+
+Recall that in our oligo design, each nucleotide is tiled by several different oligos and hence we can use different approaches to model nucleotide counts from the corresponding oligo counts. A simple approach might be to simply sum the counts for each oligo tiling a particular nucleotide and assign the `sum` as the nucleotide count. Another approach would be to take the `median` of counts of all oligos tiling a given nucleotide. We can specify the exact method we wish to use to model the nucleotide counts using the `modelMethods` parameter. In addition, we need to provide a parameter called `conditionLabels` to define the sample labels for our 2 conditions, for example: RNA, DNA or Nuclei, Total. 
 
 ```{r Model Nucleotide Counts}
-metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
+
 oligoLen <- 110
-modeledNucs <- modelNucCounts(normalizedCounts, metaData, 
-                              conditionLabels = c("Nuclei", "Total"), 
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels = c("Nuclei", "Total"), 
                               modelMethod = "median", oligoLen = 110)
+tbl_df(modeledNucs)
 ```
+
+The output of modelNucCounts is a matrix whose row names indicate the tiled region, a column for the position in the tiled region and 1 column each for every condition replicate present in our experiment.
 
 ## Level 5 - Identify regions with differential nucleotide counts
 
