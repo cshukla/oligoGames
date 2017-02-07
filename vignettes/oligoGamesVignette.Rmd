@@ -19,6 +19,16 @@ This vignette documents the functions provided in oligoGames. I start with a fun
 
 Now, let's play a simple game.
 
+## Level 0 - Set up the environment to start playing the oligo games
+
+We will use different packages in this vignette so to begin we must load all of them in the current session.
+
+```{r Packages}
+library(oligoGames)
+library(readr)
+library(ggplot2)
+```
+
 ## Level 1 - Design an Oligo Pool from a set of sequences
 
 In level one, we design the oligo pool by tiling regions whose activity we wish to understand. For example, lets say you want to find nuclear localization elements in long non coding RNAs (lncRNAs). In this case, your oligo pool would invovle tiling cDNAs of lncRNA genes with oligos of fixed length. To each oligo we need to add a unique barcode which we can sequence and match to the oligo as well as forward and reverse universal primers for making sequencing libraries using PCR. We provide a simple function - designOligoPool for this purpose.
@@ -40,12 +50,16 @@ designOligoPool(regionsFile = regionsFile, tileSize = 110, overlap = 10,
 
 Once we uniquely map the reads to the barcodes, our next challenge is to normalize the read counts across samples to account for difference in library sizes i.e. sequencing depth. For this, we provide the `normCounts` function which inputs a matrix with raw oligo counts and outputs a matrix of normalized oligo counts. 
 
+
+
 ```{r Normalization}
 rawCounts <- system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
 normalizedCounts <- normCounts(rawCounts, normType='median')
 ```
 
 ## Level 4 - Model nucleotide counts from oligo counts
+
+Next, we go from oligo counts to nucleotide counts. Each nucleotide is tiled by several different oligos and hence we can use different approaches to model nucleotide counts from the corresponding oligo counts. A simple approach might be 
 
 ```{r Model Nucleotide Counts}
 metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
@@ -58,6 +72,9 @@ modeledNucs <- modelNucCounts(normalizedCounts, metaData,
 ## Level 5 - Identify regions with differential nucleotide counts
 
 ```{r Infer Differential Regions}
+DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, 
+                      minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, 
+                      workers = 1, sampleSize = 4, maxPerms = 50, onlyUp = TRUE)
 ```
 
 ## Level 6 - Learn k-mers enriched in regions identified in previous level
