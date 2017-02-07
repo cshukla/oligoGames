@@ -50,10 +50,11 @@ designOligoPool(regionsFile = regionsFile, tileSize = 110, overlap = 10,
 
 Once we uniquely map the reads to the barcodes, our next challenge is to normalize the read counts across samples to account for difference in library sizes i.e. sequencing depth. For this, we provide the `normCounts` function which inputs a matrix with raw oligo counts and outputs a matrix of normalized oligo counts. 
 
-
+Also, please note the format of `rawCounts` which we input to this function. It contains one column for the names of transcripts i.e. oligos and then 1 column each for every sample we sequenced for this game. While it is not important for the first column to be named "Transcript" for this particular function, it is crucial for the downstream functions and so we recommend you to adhere to this formatting strictly. The replicate number is directly appended to the sample type i.e. "Nucleus1", "Nucleus2" etc. We also request the user to first provide all replicates of a given condition and only then proceed to the next condition. For example, we prefer columns be ordered "Nucleus1", "Nucleus2", "Nucleus3", "Total1", "Total2", "Total3" rather than "Nucleu1", "Total1", "Nucleus2", "Total2", "Nucleus3", "Total3"
 
 ```{r Normalization}
-rawCounts <- system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
+rawCounts <- read_tsv(system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"), col_names = T)
+tbl_df(rawCounts)
 normalizedCounts <- normCounts(rawCounts, normType='median')
 ```
 
@@ -73,7 +74,7 @@ modeledNucs <- modelNucCounts(normalizedCounts, metaData,
 
 ```{r Infer Differential Regions}
 DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, 
-                      minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, 
+                      minNumRegion = 3, cutoff = 0.5, smooth = TRUE, verbose = TRUE, 
                       workers = 1, sampleSize = 4, maxPerms = 50, onlyUp = TRUE)
 ```
 
