@@ -77,19 +77,30 @@ Recall that in our oligo design, each nucleotide is tiled by several different o
 ```{r Model Nucleotide Counts}
 
 oligoLen <- 110
-modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels = c("Nuclei", "Total"), 
+conditionLabels = c("Nuclei", "Total")
+modeledNucs <- modelNucCounts(normalizedCounts, metaData, conditionLabels, 
                               modelMethod = "median", oligoLen = 110)
 tbl_df(modeledNucs)
 ```
 
-The output of modelNucCounts is a matrix whose row names indicate the tiled region, a column for the position in the tiled region and 1 column each for every condition replicate present in our experiment.
+The output of modelNucCounts is a matrix whose row names indicate the tiled region, a column for the position in the tiled region and 1 column each for every sample present in our experiment.
 
 ## Level 5 - Identify regions with differential nucleotide counts
 
-```{r Infer Differential Regions}
-DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, bpSpan = 50, 
-                      minNumRegion = 3, cutoff = 0.5, smooth = TRUE, verbose = TRUE, 
-                      workers = 1, sampleSize = 4, maxPerms = 50, onlyUp = TRUE)
+Once we model nucleotide counts from our sequencing data, we want to infer differential regions i.e. regions which are enriched or depleted in one condition compared to the other. For this, we use the DRfinder function. You can take a look at all the parameters given to the function using `?DRfinder`.
+
+Mainly - you need to provide a matrix of nucleotide counts for each region (`OligoSignal`), the sample labels for the 2 conditions `conditionLabels`, minimum number of consecutive positions required for a region (`minNumRegion`), the threshold for the difference between the 2 conditions (`cutoff`) and whether you want to smooth the data (`smooth`).
+
+If you have tiled your oligos deeply, we recommend to turn the smoothing off. Additionally, often times you are only interested in cases where condition1 > condition2. For example, to find nuclear localization sequences you only want regions where counts in nucleus > counts in total. In these situations, we recommend you set `onlyUp` parameter to be `TRUE`. 
+
+```{r Infer Differential Regions, echo=FALSE}
+DRregions <- DRfinder(modeledNucs, conditionLabels, minNumRegion = 3, cutoff = 0.5, 
+                      smooth = FALSE, verbose = TRUE, workers = 1, maxPerms = 50, onlyUp = TRUE)
 ```
 
+Finally, you can subset the DRregions based on p-val or q-val to get the significant hits. For example, to get differential regions with 10% FDR,
+
+```{r Subset Differential Regions}
+filteredRegions <- filter(DRregions, qval<=0.1)
+```
 ## Level 6 - Learn k-mers enriched in regions identified in previous level
