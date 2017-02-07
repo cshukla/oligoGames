@@ -16,7 +16,7 @@
 #' @return normCounts matrix of normalized counts
 #' @export
 #' @examples 
-#' rawCounts = system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
+#' rawCounts = read.table(system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"), header=T, sep='\t')
 #' normalizedCounts <- normCounts(rawCounts, normType='median')
 
 normCounts <- function(rawCounts='allTranscriptsCounts_Raw.tsv',normType='median',quantile=0.5) {
