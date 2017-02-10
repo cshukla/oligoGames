@@ -7,7 +7,7 @@
 bumphunt(oligo.mat, design, chr = NULL, pos, coef = 2, minInSpan = 10,
   minNum = 10, minNumRegion = 5, cutoff = NULL, maxGap = 50,
   maxGapSmooth = 50, smooth = FALSE, bpSpan = 100, verbose = TRUE,
-  workers = NULL, logT = TRUE, altStat = FALSE, ...)
+  workers = NULL, logT = TRUE, altStat = FALSE, sampleSize, ...)
 }
 \arguments{
 \item{oligo.mat}{a matrix that contains the nucleotide level counts that 
@@ -81,6 +81,9 @@ deviations are noisy for small numbers of replicates, the estimates
 are smoothed across neighboring loci (though the effect size estimates
 themselves are not smoothed; that can be accomplished by setting 
 smooth=TRUE).}
+
+\item{sampleSize}{positive integer that represents the number of samples
+in each condition.  Defaults to \code{(ncol(OligoSignal)-1)/2}.}
 }
 \value{
 a data.frame that contains the results of region detection. The

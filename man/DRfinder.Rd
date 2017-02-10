@@ -114,8 +114,8 @@ oligoLen <- 110
 conditionLabels <- c("Nuclei", "Total")
 modeledNucs <- modelNucCounts(normalizedCounts, metaData, 
 conditionLabels, modelMethod = "median", oligoLen = 110)
-DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, 
-bpSpan = 50, minNumRegion = 3, cutoff = 0.25, smooth = TRUE, verbose = TRUE, 
+DRregions <- DRfinder(modeledNucs, conditionLabels,
+minNumRegion = 3, cutoff = 0.25, smooth = FALSE,
 workers = 1, sampleSize = 4, maxPerms = 50, altStat=TRUE)
 }
 }

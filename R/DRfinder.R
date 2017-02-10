@@ -130,7 +130,8 @@ DRfinder <- function(OligoSignal,
                  cutoff = cutoff, maxGap = maxGap, 
                  smooth = smooth, 
                  verbose = verbose,
-                 workers = workers, logT=logT) 
+                 workers = workers, logT=logT,
+                 sampleSize = sampleSize) 
 
   if (onlyUp){
     # only keep regions with positive directionality
@@ -254,7 +255,7 @@ bumphunt = function(oligo.mat, design,
                     cutoff = NULL, maxGap = 50, maxGapSmooth=50,
                     smooth = FALSE, bpSpan=100,
                     verbose = TRUE, workers=NULL, 
-                    logT=TRUE, altStat=FALSE, ...)
+                    logT=TRUE, altStat=FALSE, sampleSize, ...)
 {
   if (!is.matrix(oligo.mat))
     stop("'oligo.mat' must be a matrices.")
@@ -322,6 +323,7 @@ bumphunt = function(oligo.mat, design,
       }))
     scale <- sqrt(1/length(g1) + 1/length(g2))
     tstat.sd <- smoothSds * scale
+    tstat.sd <- tstat.sd / sqrt(sampleSize)
     tstat <- (group1.means - group2.means) / tstat.sd
     is.na(tstat)[tstat.sd == 0] <- TRUE
     
