@@ -6,9 +6,9 @@
 \usage{
 DRfinder(OligoSignal, conditionLabels = c("condition1", "condition2"),
   minInSpan = 10, bpSpan = 100, minNumRegion = 5, cutoff = NULL,
-  smooth = FALSE, verbose = TRUE, workers = NULL,
+  smooth = FALSE, verbose = FALSE, quiet = FALSE, workers = NULL,
   sampleSize = (ncol(OligoSignal) - 1)/2, maxPerms = 50, logT = TRUE,
-  coef = 2, onlyUp = FALSE)
+  coef = 2, onlyUp = FALSE, altStat = FALSE)
 }
 \arguments{
 \item{OligoSignal}{a data frame in the format returned by the function
@@ -39,8 +39,15 @@ candidate regions.}
 nucleotide level signal when discovering candidate regions.
 Defaults to FALSE.}
 
-\item{verbose}{logical value that indicates whether progress messages
-should be printed to stout. Defaults value is TRUE.}
+\item{verbose}{logical value that indicates whether addtional progress 
+messages within each iteration should be printed to stout. Default value
+is FALSE.}
+
+\item{quiet}{logical value that indicates whether a message is printed to the
+stout regarding the completion of each permutation iteration. If FALSE 
+(default value) then messages will be printed.  If TRUE, then messages
+will not be printed (but additional messages will be printed within
+each iteration if \code{verbose} is set to TRUE.}
 
 \item{workers}{positive integer that represents the number of cores to 
 use if parallelization is desired of the smoothing step.}
@@ -63,6 +70,16 @@ matrix in \code{design} contains the condition covariate of interest}
 \item{onlyUp}{a logical value indicating whether to only consider differences
 in the positive direction (signal in condition 1 - condition 2 > 0). 
 Default value is FALSE.}
+
+\item{altStat}{logical value indicating whether to use alternate statistic
+for single loci in constructing candidate regions that incorporates the
+standard deviation among replicates.  If true, t-statistics (instead of
+effect size estimates) will be used (i.e. t-stat = effect size / sd).  
+Since estimates of standard 
+deviations are noisy for small numbers of replicates, the estimates 
+are smoothed across neighboring loci (though the effect size estimates
+themselves are not smoothed; that can be accomplished by setting 
+smooth=TRUE).}
 }
 \value{
 a data.frame that contains the results of the inference. The
@@ -98,8 +115,8 @@ conditionLabels <- c("Nuclei", "Total")
 modeledNucs <- modelNucCounts(normalizedCounts, metaData, 
 conditionLabels, modelMethod = "median", oligoLen = 110)
 DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, 
-bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, 
-workers = 1, sampleSize = 4, maxPerms = 50)
+bpSpan = 50, minNumRegion = 3, cutoff = 0.25, smooth = TRUE, verbose = TRUE, 
+workers = 1, sampleSize = 4, maxPerms = 50, altStat=TRUE)
 }
 }
 \keyword{inference}

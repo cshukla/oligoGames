@@ -7,7 +7,7 @@
 bumphunt(oligo.mat, design, chr = NULL, pos, coef = 2, minInSpan = 10,
   minNum = 10, minNumRegion = 5, cutoff = NULL, maxGap = 50,
   maxGapSmooth = 50, smooth = FALSE, bpSpan = 100, verbose = TRUE,
-  workers = NULL, logT = TRUE, ...)
+  workers = NULL, logT = TRUE, altStat = FALSE, ...)
 }
 \arguments{
 \item{oligo.mat}{a matrix that contains the nucleotide level counts that 
@@ -60,8 +60,9 @@ Defaults to FALSE.}
 of the smoothing span window if \code{smooth} is TRUE.  Default value is 
 100}
 
-\item{verbose}{logical value that indicates whether progress messages
-should be printed to stout. Defaults value is TRUE.}
+\item{verbose}{logical value that indicates whether addtional progress 
+messages within each iteration should be printed to stout. Default value
+is FALSE.}
 
 \item{workers}{positive integer that represents the number of cores to 
 use if parallelization is desired of the smoothing step.}
@@ -70,6 +71,16 @@ use if parallelization is desired of the smoothing step.}
 transformed signal (plus a pseudocount of 1).  Default is TRUE.  Only
 set to false if transformation has been done prior to running this 
 function, or if distribution of raw values looks relatively symmetric.}
+
+\item{altStat}{logical value indicating whether to use alternate statistic
+for single loci in constructing candidate regions that incorporates the
+standard deviation among replicates.  If true, t-statistics (instead of
+effect size estimates) will be used (i.e. t-stat = effect size / sd).  
+Since estimates of standard 
+deviations are noisy for small numbers of replicates, the estimates 
+are smoothed across neighboring loci (though the effect size estimates
+themselves are not smoothed; that can be accomplished by setting 
+smooth=TRUE).}
 }
 \value{
 a data.frame that contains the results of region detection. The

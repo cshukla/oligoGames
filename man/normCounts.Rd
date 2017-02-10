@@ -29,7 +29,7 @@ normCounts matrix of normalized counts
 This function performs library normalization for the experiment counts
 }
 \examples{
-rawCounts = system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
+rawCounts = read.table(system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames"), header=T, sep='\\t')
 normalizedCounts <- normCounts(rawCounts, normType='median')
 }
 \keyword{normalization}

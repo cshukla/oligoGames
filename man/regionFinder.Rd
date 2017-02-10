@@ -50,8 +50,9 @@ sorted in ascending order.  Defaults to FALSE.}
 has one row per nucleotide and
 one column per sample.}
 
-\item{verbose}{logical value that indicates whether progress messages
-should be printed to stout. Defaults value is TRUE.}
+\item{verbose}{logical value that indicates whether addtional progress 
+messages within each iteration should be printed to stout. Default value
+is FALSE.}
 
 \item{design}{a model matrix with one row per sample and one column per 
 independent covariate.}

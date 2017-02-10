@@ -29,8 +29,14 @@
 #' @param bpSpan a positive integer that represents the length in basepairs
 #'    of the smoothing span window if \code{smooth} is TRUE.  Default value is 
 #'    100
-#' @param verbose logical value that indicates whether progress messages
-#'    should be printed to stout. Defaults value is TRUE.
+#' @param verbose logical value that indicates whether addtional progress 
+#'    messages within each iteration should be printed to stout. Default value
+#'    is FALSE.
+#'@param quiet logical value that indicates whether a message is printed to the
+#'    stout regarding the completion of each permutation iteration. If FALSE 
+#'    (default value) then messages will be printed.  If TRUE, then messages
+#'    will not be printed (but additional messages will be printed within
+#'    each iteration if \code{verbose} is set to TRUE. 
 #' @param workers positive integer that represents the number of cores to 
 #'    use if parallelization is desired of the smoothing step. 
 #' @param logT logical value that indicates whether to model the log2 
@@ -45,6 +51,15 @@
 #' @param onlyUp a logical value indicating whether to only consider differences
 #'    in the positive direction (signal in condition 1 - condition 2 > 0). 
 #'    Default value is FALSE.
+#' @param altStat logical value indicating whether to use alternate statistic
+#'    for single loci in constructing candidate regions that incorporates the
+#'    standard deviation among replicates.  If true, t-statistics (instead of
+#'    effect size estimates) will be used (i.e. t-stat = effect size / sd).  
+#'    Since estimates of standard 
+#'    deviations are noisy for small numbers of replicates, the estimates 
+#'    are smoothed across neighboring loci (though the effect size estimates
+#'    themselves are not smoothed; that can be accomplished by setting 
+#'    smooth=TRUE).
 #' @return a data.frame that contains the results of the inference. The
 #'    data.frame contains one row for each candidate region, and 
 #'    9 columns, in the following order: 1. chr = 
@@ -73,9 +88,9 @@
 #' conditionLabels <- c("Nuclei", "Total")
 #' modeledNucs <- modelNucCounts(normalizedCounts, metaData, 
 #' conditionLabels, modelMethod = "median", oligoLen = 110)
-#' DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, 
-#' bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, verbose = TRUE, 
-#' workers = 1, sampleSize = 4, maxPerms = 50)
+#' DRregions <- DRfinder(modeledNucs, conditionLabels,
+#' minNumRegion = 3, cutoff = 0.25, smooth = FALSE,
+#' workers = 1, sampleSize = 4, maxPerms = 50, altStat=TRUE)
 #' }
 
 DRfinder <- function(OligoSignal, 
@@ -85,11 +100,12 @@ DRfinder <- function(OligoSignal,
                      minNumRegion=5, 
                      cutoff = NULL, 
                      smooth = FALSE,
-                     verbose = TRUE,
+                     verbose = FALSE, 
+                     quiet=FALSE,
                      workers = NULL, 
                      sampleSize=(ncol(OligoSignal)-1)/2,
                      maxPerms=50, logT=TRUE,coef=2, 
-                     onlyUp=FALSE){
+                     onlyUp=FALSE, altStat=FALSE){
   
   cond <- c(rep(conditionLabels[1], sampleSize), 
             rep(conditionLabels[2], sampleSize))
@@ -162,7 +178,8 @@ DRfinder <- function(OligoSignal,
           res.flip <- rbind(res.flip, res.flip.p)
         }
       }
-      print(paste0(j, " out of ", ncol(perms), " permutations completed"))
+      if(!quiet)
+        message(paste0(j, " out of ", ncol(perms), " permutations completed"))
     }	
   }else{
     stop("Error: Currently only balanced designs supported")
@@ -225,6 +242,9 @@ DRfinder <- function(OligoSignal,
 #' @import bumphunter
 #' @import foreach
 #' @import doParallel
+#' @importFrom S4Vectors runmean
+#' @importFrom S4Vectors Rle
+#' @importFrom matrixStats rowVars
 #' @keywords inference
   
 ##The WGBS version of the 'BumphunterEngine' function with 'LM' and 'GLM'
@@ -233,7 +253,8 @@ bumphunt = function(oligo.mat, design,
                     minNumRegion=5,
                     cutoff = NULL, maxGap = 50, maxGapSmooth=50,
                     smooth = FALSE, bpSpan=100,
-                    verbose = TRUE, workers=NULL, logT=TRUE, ...)
+                    verbose = TRUE, workers=NULL, 
+                    logT=TRUE, altStat=FALSE, ...)
 {
   if (!is.matrix(oligo.mat))
     stop("'oligo.mat' must be a matrices.")
@@ -266,12 +287,47 @@ bumphunt = function(oligo.mat, design,
   if (is.factor(chr))
     chr <- as.character(chr)
   
-  cluster <- bumphunter:::clusterMaker(chr, pos, maxGap = maxGap)
+  cluster <- bumphunter:::clusterMaker(factor(chr, levels=unique(chr)), pos,
+                                        maxGap = maxGap, assumeSorted=TRUE)
   
   if (verbose)
     message("Computing coefficients.")
   
-  if(logT){
+  if (altStat){     # use alternate single-loci stat that incorporates SD 
+    # function to smooth sds (internal function from bsseq package)
+    smoothSd <- function(Sds, k, minSD) {
+      k0 <- floor(k/2)
+      if(all(is.na(Sds))) return(Sds)
+      thresSD <- pmax(Sds, minSD, na.rm = TRUE)
+      addSD <- rep(minSD, k0)
+      sSds <- as.vector(runmean(Rle(c(addSD, thresSD, addSD)), k = k))
+      sSds
+    }
+    
+    g1 <- which(design[,coef]==1)
+    g2 <- which(design[,coef]==0)
+    group1.means <- rowMeans(log2(oligo.mat+1)[, g1, drop = FALSE],
+                             na.rm = TRUE)
+    group2.means <- rowMeans(log2(oligo.mat+1)[, g2, drop = FALSE], 
+                             na.rm = TRUE)
+    
+    rawSds <- sqrt( ((length(g1) - 1) * rowVars(log2(oligo.mat+1), cols = g1) +
+                    (length(g2) - 1) * rowVars(log2(oligo.mat+1), cols = g2)) /
+                    (length(g1) + length(g2) - 2))
+    
+    clusterIdx <- split(seq(along=cluster), cluster)
+    sdThresh <- quantile(rawSds, 0.25, na.rm = TRUE)
+    smoothSds <- unlist(lapply(clusterIdx, function(idx) {
+        smoothSd(rawSds[idx], k = 11, minSD = sdThresh)
+      }))
+    scale <- sqrt(1/length(g1) + 1/length(g2))
+    tstat.sd <- smoothSds * scale
+    tstat <- (group1.means - group2.means) / tstat.sd
+    is.na(tstat)[tstat.sd == 0] <- TRUE
+    
+    est <- data.frame(coef=tstat, stdev.unscaled=rawSds, sigma=scale)
+
+  }else if(logT){
     est <- bumphunter:::.getEstimate(log2(oligo.mat+1), 
                                      design, coef, full=TRUE) 
   }else{
@@ -279,6 +335,7 @@ bumphunt = function(oligo.mat, design,
                                      design, coef, full=TRUE) 
   }
   rawBeta <- est$coef
+  cluster <- as.integer(cluster)
   
   if (smooth) {
     sd.raw = est$sigma*est$stdev.unscaled
@@ -322,7 +379,7 @@ bumphunt = function(oligo.mat, design,
   tab <- regionFinder(x = beta, chr = chr, pos = pos, cluster = cluster,
                       cutoff = cutoff, ind = Index, minNumRegion = minNumRegion,
                       oligo.mat = oligo.mat,
-                      verbose = TRUE,
+                      verbose = verbose,
                       design = design, workers=workers, logT=logT)
   rm(beta);
   rm(chr);

@@ -23,8 +23,9 @@ basepairs
 that can separate two nucleotides before they will be divided into two 
 separate smoothing regions.  Defaults to 50.}
 
-\item{verbose}{logical value that indicates whether progress messages
-should be printed to stout. Defaults value is TRUE.}
+\item{verbose}{logical value that indicates whether addtional progress 
+messages within each iteration should be printed to stout. Default value
+is FALSE.}
 
 \item{workers}{positive integer that represents the number of cores to 
 use if parallelization is desired of the smoothing step.}

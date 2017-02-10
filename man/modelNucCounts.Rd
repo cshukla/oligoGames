@@ -45,8 +45,8 @@ nucleotides and then using conditional inference based on the observed oligo
 counts, obtain the nucleotide counts.
 }
 \examples{
-normalizedCounts <- normCounts(rawCounts = system.file("extdata", 
-"allTranscriptsCounts_Raw.tsv", package = "oligoGames"))
+normalizedCounts <- normCounts(rawCounts = read.table(system.file("extdata", 
+"allTranscriptsCounts_Raw.tsv", package = "oligoGames"), sep='\\t', header=T))
 metaData <- system.file("extdata", "oligoMeta.tsv", package = "oligoGames")
 oligoLen <- 110
 modeledNucs <- modelNucCounts(normalizedCounts, metaData, 
