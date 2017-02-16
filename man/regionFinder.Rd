@@ -7,7 +7,8 @@
 regionFinder(x, chr, pos, cluster = NULL, ind = seq(along = x),
   order = TRUE, minNumRegion = 5, maxGap, cutoff = quantile(abs(x), 0.99),
   assumeSorted = FALSE, oligo.mat = oligo.mat, verbose = TRUE,
-  design = design, workers = workers, logT = TRUE)
+  design = design, workers = workers, logT = TRUE, naive = FALSE,
+  beta = NULL)
 }
 \arguments{
 \item{x}{a vector of condition coefficients (for the covariate of interest)
@@ -64,6 +65,14 @@ use if parallelization is desired of the smoothing step.}
 transformed signal (plus a pseudocount of 1).  Default is TRUE.  Only
 set to false if transformation has been done prior to running this 
 function, or if distribution of raw values looks relatively symmetric.}
+
+\item{naive}{a logical value indicating whether to use naive region-level
+statistic in step 2 that simply takes average of statistic in step 1
+across the region, instead of the default, which calculates a new 
+statistic that jointly considers all loci in the region.}
+
+\item{beta}{vector of loci-specific statistics from step 1 (only needed
+if naive is TRUE)}
 }
 \value{
 a data.frame that contains the results of region detection. The

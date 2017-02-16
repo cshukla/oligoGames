@@ -8,7 +8,7 @@ DRfinder(OligoSignal, conditionLabels = c("condition1", "condition2"),
   minInSpan = 10, bpSpan = 100, minNumRegion = 5, cutoff = NULL,
   smooth = FALSE, verbose = FALSE, quiet = FALSE, workers = NULL,
   sampleSize = (ncol(OligoSignal) - 1)/2, maxPerms = 50, logT = TRUE,
-  coef = 2, onlyUp = FALSE, altStat = 0)
+  coef = 2, onlyUp = FALSE, altStat = 0, naive = FALSE)
 }
 \arguments{
 \item{OligoSignal}{a data frame in the format returned by the function
@@ -81,6 +81,11 @@ deviations are noisy for small numbers of replicates, the estimates
 are smoothed across neighboring loci (though the effect size estimates
 themselves are not smoothed; that can be accomplished by setting 
 smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used.}
+
+\item{naive}{a logical value indicating whether to use naive region-level
+statistic in step 2 that simply takes average of statistic in step 1
+across the region, instead of the default, which calculates a new 
+statistic that jointly considers all loci in the region.}
 }
 \value{
 a data.frame that contains the results of the inference. The

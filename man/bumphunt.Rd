@@ -7,7 +7,8 @@
 bumphunt(oligo.mat, design, chr = NULL, pos, coef = 2, minInSpan = 10,
   minNum = 10, minNumRegion = 5, cutoff = NULL, maxGap = 50,
   maxGapSmooth = 50, smooth = FALSE, bpSpan = 100, verbose = TRUE,
-  workers = NULL, logT = TRUE, altStat = 0, sampleSize, ...)
+  workers = NULL, logT = TRUE, altStat = 0, sampleSize, naive = FALSE,
+  ...)
 }
 \arguments{
 \item{oligo.mat}{a matrix that contains the nucleotide level counts that 
@@ -85,6 +86,11 @@ smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used.}
 
 \item{sampleSize}{positive integer that represents the number of samples
 in each condition.  Defaults to \code{(ncol(OligoSignal)-1)/2}.}
+
+\item{naive}{a logical value indicating whether to use naive region-level
+statistic in step 2 that simply takes average of statistic in step 1
+across the region, instead of the default, which calculates a new 
+statistic that jointly considers all loci in the region.}
 }
 \value{
 a data.frame that contains the results of region detection. The

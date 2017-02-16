@@ -51,6 +51,10 @@
 #' @param onlyUp a logical value indicating whether to only consider differences
 #'    in the positive direction (signal in condition 1 - condition 2 > 0). 
 #'    Default value is FALSE.
+#' @param naive a logical value indicating whether to use naive region-level
+#'    statistic in step 2 that simply takes average of statistic in step 1
+#'    across the region, instead of the default, which calculates a new 
+#'    statistic that jointly considers all loci in the region.
 #' @param altStat numeric value indicating whether to use alternate statistic
 #'    for single loci in constructing candidate regions that incorporates the
 #'    standard deviation among replicates.  If 0 (default), differences in means
@@ -106,7 +110,8 @@ DRfinder <- function(OligoSignal,
                      workers = NULL, 
                      sampleSize=(ncol(OligoSignal)-1)/2,
                      maxPerms=50, logT=TRUE,coef=2, 
-                     onlyUp=FALSE, altStat=0){
+                     onlyUp=FALSE, altStat=0,
+                     naive=FALSE){
   
   cond <- c(rep(conditionLabels[1], sampleSize), 
             rep(conditionLabels[2], sampleSize))
@@ -132,7 +137,8 @@ DRfinder <- function(OligoSignal,
                  smooth = smooth, 
                  verbose = verbose,
                  workers = workers, logT=logT,
-                 sampleSize = sampleSize, altStat=altStat) 
+                 sampleSize = sampleSize, altStat=altStat,
+                 naive=naive) 
 
   if (onlyUp){
     # only keep regions with positive directionality
@@ -174,7 +180,8 @@ DRfinder <- function(OligoSignal,
                             smooth = smooth,
                             verbose = verbose,
                             workers = workers, logT=logT, 
-                            altStat=altStat, sampleSize=sampleSize) 
+                            altStat=altStat, sampleSize=sampleSize,
+                            naive=naive) 
       if (class(res.flip.p)=="data.frame"){
         if (nrow(res.flip.p) > 0){
           res.flip.p$permNum <- j 
@@ -257,7 +264,8 @@ bumphunt = function(oligo.mat, design,
                     cutoff = NULL, maxGap = 50, maxGapSmooth=50,
                     smooth = FALSE, bpSpan=100,
                     verbose = TRUE, workers=NULL, 
-                    logT=TRUE, altStat=0, sampleSize, ...)
+                    logT=TRUE, altStat=0, sampleSize, 
+                    naive=FALSE, ...)
 {
   if (!is.matrix(oligo.mat))
     stop("'oligo.mat' must be a matrices.")
@@ -389,15 +397,16 @@ bumphunt = function(oligo.mat, design,
     beta <- rawBeta
     Index <- seq(along = beta)
   }
-  rm(rawBeta)
   gc()
+  rm(rawBeta)
   if (verbose)
     message("Finding regions.")
   tab <- regionFinder(x = beta, chr = chr, pos = pos, cluster = cluster,
                       cutoff = cutoff, ind = Index, minNumRegion = minNumRegion,
                       oligo.mat = oligo.mat,
                       verbose = verbose,
-                      design = design, workers=workers, logT=logT)
+                      design = design, workers=workers, logT=logT, 
+                      naive=naive, beta=beta)
   rm(beta);
   rm(chr);
   rm(pos);
@@ -435,6 +444,8 @@ bumphunt = function(oligo.mat, design,
 #'  Defaults to TRUE.
 #' @param assumeSorted logical that indicates whether the nucleotides are 
 #'  sorted in ascending order.  Defaults to FALSE.
+#' @param beta vector of loci-specific statistics from step 1 (only needed
+#'  if naive is TRUE)
 #' @inheritParams DRfinder
 #' @inheritParams bumphunt
 #' @return a data.frame that contains the results of region detection. The
@@ -460,10 +471,14 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
                          maxGap, cutoff=quantile(abs(x), 0.99),
                          assumeSorted = FALSE, oligo.mat=oligo.mat,
                          verbose = TRUE,
-                         design=design, workers=workers, logT=TRUE){
+                         design=design, workers=workers, logT=TRUE,
+                         naive=FALSE, beta=NULL){
   if(any(is.na(x[ind]))){
     warning("NAs found and removed. ind changed.")
     ind <- intersect(which(!is.na(x)),ind)
+  }
+  if (is.null(beta) & naive){
+    stop("Error: beta needs to be specified if calculating naive region stat")
   }
   if(is.null(cluster))
     cluster <- bumphunter:::clusterMaker(chr, pos, maxGap=maxGap, 
@@ -516,6 +531,10 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
 
     return(stat)
   }
+  
+  stat.naive <- function(ix){
+    return(mean(beta[ix]))
+  }
 
   cov.upper <- quantile(oligo.mat, 0.9)
   t1 <- proc.time()
@@ -528,10 +547,15 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
               indexStart=sapply(Indexes[[i]], function(Index) min(ind[Index])),
               indexEnd = sapply(Indexes[[i]], function(Index) max(ind[Index])),
               length = sapply(Indexes[[i]], length), stringsAsFactors=FALSE)
-
-    res[[i]]$stat = unlist(mclapply(Indexes[[i]], function(Index)
+    if (!naive){
+      res[[i]]$stat = unlist(mclapply(Indexes[[i]], function(Index)
         stat.OligoSignal.spline(ind[Index]),
         mc.cores=workers))
+    }else{
+      res[[i]]$stat = unlist(mclapply(Indexes[[i]], function(Index)
+        stat.naive(ind[Index]),
+        mc.cores=workers)) 
+    }
   }
   t2 <- proc.time()
   t2 - t1
