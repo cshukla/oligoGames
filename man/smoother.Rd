@@ -57,4 +57,3 @@ This is an internal workhorse function that (optionally) smooths the
 coefficient values for the covariate of interest.
 }
 \keyword{inference}
-

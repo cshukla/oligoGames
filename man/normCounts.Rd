@@ -33,4 +33,3 @@ rawCounts = read.table(system.file("extdata", "allTranscriptsCounts_Raw.tsv", pa
 normalizedCounts <- normCounts(rawCounts, normType='median')
 }
 \keyword{normalization}
-

@@ -7,7 +7,7 @@
 bumphunt(oligo.mat, design, chr = NULL, pos, coef = 2, minInSpan = 10,
   minNum = 10, minNumRegion = 5, cutoff = NULL, maxGap = 50,
   maxGapSmooth = 50, smooth = FALSE, bpSpan = 100, verbose = TRUE,
-  workers = NULL, logT = TRUE, altStat = FALSE, sampleSize, ...)
+  workers = NULL, logT = TRUE, altStat = 0, sampleSize, ...)
 }
 \arguments{
 \item{oligo.mat}{a matrix that contains the nucleotide level counts that 
@@ -72,15 +72,16 @@ transformed signal (plus a pseudocount of 1).  Default is TRUE.  Only
 set to false if transformation has been done prior to running this 
 function, or if distribution of raw values looks relatively symmetric.}
 
-\item{altStat}{logical value indicating whether to use alternate statistic
+\item{altStat}{numeric value indicating whether to use alternate statistic
 for single loci in constructing candidate regions that incorporates the
-standard deviation among replicates.  If true, t-statistics (instead of
+standard deviation among replicates.  If 0 (default), differences in means
+are used as the statistic.  If 1, t-statistics (instead of
 effect size estimates) will be used (i.e. t-stat = effect size / sd).  
 Since estimates of standard 
 deviations are noisy for small numbers of replicates, the estimates 
 are smoothed across neighboring loci (though the effect size estimates
 themselves are not smoothed; that can be accomplished by setting 
-smooth=TRUE).}
+smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used.}
 
 \item{sampleSize}{positive integer that represents the number of samples
 in each condition.  Defaults to \code{(ncol(OligoSignal)-1)/2}.}
@@ -103,4 +104,3 @@ calculates the nucleotide-level signal, and calls the \code{regionFinder}
 function to determine candidate regions and score them.
 }
 \keyword{inference}
-

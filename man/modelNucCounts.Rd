@@ -53,4 +53,3 @@ modeledNucs <- modelNucCounts(normalizedCounts, metaData,
 conditionLabels = c("Nuclei", "Total"), modelMethod = "median", oligoLen = 110)
 }
 \keyword{modeling}
-

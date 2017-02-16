@@ -93,4 +93,3 @@ reSeq = '', numScrambles = 0, barcodeLen = 10, outDir = outDir)
 \keyword{design}
 \keyword{oligo}
 \keyword{pool}
-

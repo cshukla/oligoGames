@@ -8,7 +8,7 @@ DRfinder(OligoSignal, conditionLabels = c("condition1", "condition2"),
   minInSpan = 10, bpSpan = 100, minNumRegion = 5, cutoff = NULL,
   smooth = FALSE, verbose = FALSE, quiet = FALSE, workers = NULL,
   sampleSize = (ncol(OligoSignal) - 1)/2, maxPerms = 50, logT = TRUE,
-  coef = 2, onlyUp = FALSE, altStat = FALSE)
+  coef = 2, onlyUp = FALSE, altStat = 0)
 }
 \arguments{
 \item{OligoSignal}{a data frame in the format returned by the function
@@ -71,15 +71,16 @@ matrix in \code{design} contains the condition covariate of interest}
 in the positive direction (signal in condition 1 - condition 2 > 0). 
 Default value is FALSE.}
 
-\item{altStat}{logical value indicating whether to use alternate statistic
+\item{altStat}{numeric value indicating whether to use alternate statistic
 for single loci in constructing candidate regions that incorporates the
-standard deviation among replicates.  If true, t-statistics (instead of
+standard deviation among replicates.  If 0 (default), differences in means
+are used as the statistic.  If 1, t-statistics (instead of
 effect size estimates) will be used (i.e. t-stat = effect size / sd).  
 Since estimates of standard 
 deviations are noisy for small numbers of replicates, the estimates 
 are smoothed across neighboring loci (though the effect size estimates
 themselves are not smoothed; that can be accomplished by setting 
-smooth=TRUE).}
+smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used.}
 }
 \value{
 a data.frame that contains the results of the inference. The
@@ -116,8 +117,7 @@ modeledNucs <- modelNucCounts(normalizedCounts, metaData,
 conditionLabels, modelMethod = "median", oligoLen = 110)
 DRregions <- DRfinder(modeledNucs, conditionLabels,
 minNumRegion = 3, cutoff = 0.25, smooth = FALSE,
-workers = 1, sampleSize = 4, maxPerms = 50, altStat=TRUE)
+workers = 1, sampleSize = 4, maxPerms = 50, altStat=1)
 }
 }
 \keyword{inference}
-

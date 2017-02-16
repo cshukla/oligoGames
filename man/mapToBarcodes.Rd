@@ -35,4 +35,3 @@ linked with the barcode.
 }
 \keyword{fastq}
 \keyword{mapping}
-

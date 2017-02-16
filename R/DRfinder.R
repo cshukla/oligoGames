@@ -51,15 +51,16 @@
 #' @param onlyUp a logical value indicating whether to only consider differences
 #'    in the positive direction (signal in condition 1 - condition 2 > 0). 
 #'    Default value is FALSE.
-#' @param altStat logical value indicating whether to use alternate statistic
+#' @param altStat numeric value indicating whether to use alternate statistic
 #'    for single loci in constructing candidate regions that incorporates the
-#'    standard deviation among replicates.  If true, t-statistics (instead of
+#'    standard deviation among replicates.  If 0 (default), differences in means
+#'    are used as the statistic.  If 1, t-statistics (instead of
 #'    effect size estimates) will be used (i.e. t-stat = effect size / sd).  
 #'    Since estimates of standard 
 #'    deviations are noisy for small numbers of replicates, the estimates 
 #'    are smoothed across neighboring loci (though the effect size estimates
 #'    themselves are not smoothed; that can be accomplished by setting 
-#'    smooth=TRUE).
+#'    smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used.
 #' @return a data.frame that contains the results of the inference. The
 #'    data.frame contains one row for each candidate region, and 
 #'    9 columns, in the following order: 1. chr = 
@@ -90,7 +91,7 @@
 #' conditionLabels, modelMethod = "median", oligoLen = 110)
 #' DRregions <- DRfinder(modeledNucs, conditionLabels,
 #' minNumRegion = 3, cutoff = 0.25, smooth = FALSE,
-#' workers = 1, sampleSize = 4, maxPerms = 50, altStat=TRUE)
+#' workers = 1, sampleSize = 4, maxPerms = 50, altStat=1)
 #' }
 
 DRfinder <- function(OligoSignal, 
@@ -105,7 +106,7 @@ DRfinder <- function(OligoSignal,
                      workers = NULL, 
                      sampleSize=(ncol(OligoSignal)-1)/2,
                      maxPerms=50, logT=TRUE,coef=2, 
-                     onlyUp=FALSE, altStat=FALSE){
+                     onlyUp=FALSE, altStat=0){
   
   cond <- c(rep(conditionLabels[1], sampleSize), 
             rep(conditionLabels[2], sampleSize))
@@ -131,7 +132,7 @@ DRfinder <- function(OligoSignal,
                  smooth = smooth, 
                  verbose = verbose,
                  workers = workers, logT=logT,
-                 sampleSize = sampleSize) 
+                 sampleSize = sampleSize, altStat=altStat) 
 
   if (onlyUp){
     # only keep regions with positive directionality
@@ -172,7 +173,8 @@ DRfinder <- function(OligoSignal,
                             cutoff = cutoff,  maxGap = maxGap, 
                             smooth = smooth,
                             verbose = verbose,
-                            workers = workers, logT=logT) 
+                            workers = workers, logT=logT, 
+                            altStat=altStat, sampleSize=sampleSize) 
       if (class(res.flip.p)=="data.frame"){
         if (nrow(res.flip.p) > 0){
           res.flip.p$permNum <- j 
@@ -255,7 +257,7 @@ bumphunt = function(oligo.mat, design,
                     cutoff = NULL, maxGap = 50, maxGapSmooth=50,
                     smooth = FALSE, bpSpan=100,
                     verbose = TRUE, workers=NULL, 
-                    logT=TRUE, altStat=FALSE, sampleSize, ...)
+                    logT=TRUE, altStat=0, sampleSize, ...)
 {
   if (!is.matrix(oligo.mat))
     stop("'oligo.mat' must be a matrices.")
@@ -294,7 +296,7 @@ bumphunt = function(oligo.mat, design,
   if (verbose)
     message("Computing coefficients.")
   
-  if (altStat){     # use alternate single-loci stat that incorporates SD 
+  if (as.numeric(altStat)==1){     # use alternate single-loci stat that incorporates SD 
     # function to smooth sds (internal function from bsseq package)
     smoothSd <- function(Sds, k, minSD) {
       k0 <- floor(k/2)
@@ -307,39 +309,52 @@ bumphunt = function(oligo.mat, design,
     
     g1 <- which(design[,coef]==1)
     g2 <- which(design[,coef]==0)
-    group1.means <- rowMeans(log2(oligo.mat+1)[, g1, drop = FALSE],
-                             na.rm = TRUE)
-    group2.means <- rowMeans(log2(oligo.mat+1)[, g2, drop = FALSE], 
-                             na.rm = TRUE)
+    
+    group1.means <- apply(log2(oligo.mat+1)[, g1, drop = FALSE], 1,
+                          function(x) median(x, na.rm=FALSE))
+    group2.means <- apply(log2(oligo.mat+1)[, g2, drop = FALSE], 1,
+                          function(x) median(x, na.rm=FALSE))
     
     rawSds <- sqrt( ((length(g1) - 1) * rowVars(log2(oligo.mat+1), cols = g1) +
                     (length(g2) - 1) * rowVars(log2(oligo.mat+1), cols = g2)) /
                     (length(g1) + length(g2) - 2))
     
     clusterIdx <- split(seq(along=cluster), cluster)
-    sdThresh <- quantile(rawSds, 0.25, na.rm = TRUE)
+    sdThresh <- quantile(rawSds, 0.50, na.rm = TRUE)
     smoothSds <- unlist(lapply(clusterIdx, function(idx) {
-        smoothSd(rawSds[idx], k = 11, minSD = sdThresh)
+        smoothSd(rawSds[idx], k = 5, minSD = sdThresh)
       }))
     scale <- sqrt(1/length(g1) + 1/length(g2))
     tstat.sd <- smoothSds * scale
-    tstat.sd <- tstat.sd / sqrt(sampleSize)
+    tstat.sd <- tstat.sd
     tstat <- (group1.means - group2.means) / tstat.sd
     is.na(tstat)[tstat.sd == 0] <- TRUE
     
     est <- data.frame(coef=tstat, stdev.unscaled=rawSds, sigma=scale)
-
-  }else if(logT){
+  
+  }else if(as.numeric(altStat)==2){
+    g1 <- which(design[,coef]==1)
+    g2 <- which(design[,coef]==0)
+    est1 <- apply(log2(oligo.mat+1), 1, function(x)
+      suppressWarnings(wilcox.test(x[g1], x[g2], exact=FALSE,
+                                   correct=FALSE)$statistic))
+    est <- data.frame(coef= (est1 - sampleSize^2/2) / sampleSize^2)
+  }else if(as.numeric(altStat)==0 & logT){
     est <- bumphunter:::.getEstimate(log2(oligo.mat+1), 
                                      design, coef, full=TRUE) 
-  }else{
+
+  }else if(as.numeric(altStat)==0 & !logT){
     est <- bumphunter:::.getEstimate(oligo.mat, 
                                      design, coef, full=TRUE) 
+    
   }
   rawBeta <- est$coef
   cluster <- as.integer(cluster)
   
   if (smooth) {
+    if (as.numeric(altStat)==2){
+      stop("Error: smoothing for altStat 2 (Wilcoxon) not implemented")
+    }
     sd.raw = est$sigma*est$stdev.unscaled
     weights <- sd.raw 
     weights[sd.raw < 10^-5] = mean(sd.raw[sd.raw > 10^-5]) 
