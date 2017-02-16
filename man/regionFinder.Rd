@@ -85,4 +85,3 @@ the candidates, and then scores each one based on a test statistic
 of the difference.
 }
 \keyword{inference}
-

@@ -103,4 +103,3 @@ calculates the nucleotide-level signal, and calls the \code{regionFinder}
 function to determine candidate regions and score them.
 }
 \keyword{inference}
-

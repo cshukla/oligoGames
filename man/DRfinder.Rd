@@ -120,4 +120,3 @@ workers = 1, sampleSize = 4, maxPerms = 50, altStat=TRUE)
 }
 }
 \keyword{inference}
-
