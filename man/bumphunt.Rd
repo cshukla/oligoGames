@@ -90,7 +90,8 @@ in each condition.  Defaults to \code{(ncol(OligoSignal)-1)/2}.}
 \item{naive}{a logical value indicating whether to use naive region-level
 statistic in step 2 that simply takes average of statistic in step 1
 across the region, instead of the default, which calculates a new 
-statistic that jointly considers all loci in the region.}
+statistic that jointly considers all loci in the region.  Also, in step 1
+the standard deviation among replicates is not considered.}
 }
 \value{
 a data.frame that contains the results of region detection. The

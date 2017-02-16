@@ -54,7 +54,8 @@
 #' @param naive a logical value indicating whether to use naive region-level
 #'    statistic in step 2 that simply takes average of statistic in step 1
 #'    across the region, instead of the default, which calculates a new 
-#'    statistic that jointly considers all loci in the region.
+#'    statistic that jointly considers all loci in the region.  Also, in step 1
+#'    the standard deviation among replicates is not considered.
 #' @param altStat numeric value indicating whether to use alternate statistic
 #'    for single loci in constructing candidate regions that incorporates the
 #'    standard deviation among replicates.  If 0 (default), differences in means
@@ -323,6 +324,7 @@ bumphunt = function(oligo.mat, design,
     group2.means <- apply(log2(oligo.mat+1)[, g2, drop = FALSE], 1,
                           function(x) median(x, na.rm=FALSE))
     
+    
     rawSds <- sqrt( ((length(g1) - 1) * rowVars(log2(oligo.mat+1), cols = g1) +
                     (length(g2) - 1) * rowVars(log2(oligo.mat+1), cols = g2)) /
                     (length(g1) + length(g2) - 2))
@@ -335,7 +337,11 @@ bumphunt = function(oligo.mat, design,
     scale <- sqrt(1/length(g1) + 1/length(g2))
     tstat.sd <- smoothSds * scale
     tstat.sd <- tstat.sd
-    tstat <- (group1.means - group2.means) / tstat.sd
+    if (!naive){
+      tstat <- (group1.means - group2.means) / tstat.sd
+    }else{
+      tstat <- (group1.means - group2.means) 
+    }
     is.na(tstat)[tstat.sd == 0] <- TRUE
     
     est <- data.frame(coef=tstat, stdev.unscaled=rawSds, sigma=scale)

@@ -69,7 +69,8 @@ function, or if distribution of raw values looks relatively symmetric.}
 \item{naive}{a logical value indicating whether to use naive region-level
 statistic in step 2 that simply takes average of statistic in step 1
 across the region, instead of the default, which calculates a new 
-statistic that jointly considers all loci in the region.}
+statistic that jointly considers all loci in the region.  Also, in step 1
+the standard deviation among replicates is not considered.}
 
 \item{beta}{vector of loci-specific statistics from step 1 (only needed
 if naive is TRUE)}
