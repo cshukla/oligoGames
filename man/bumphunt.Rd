@@ -76,13 +76,15 @@ function, or if distribution of raw values looks relatively symmetric.}
 \item{altStat}{numeric value indicating whether to use alternate statistic
 for single loci in constructing candidate regions that incorporates the
 standard deviation among replicates.  If 0 (default), differences in means
-are used as the statistic.  If 1, t-statistics (instead of
-effect size estimates) will be used (i.e. t-stat = effect size / sd).  
+are used as the statistic.  If 1, modified t-statistics (instead of
+effect size estimates) will be used (t-stat = median difference / sd).  
 Since estimates of standard 
 deviations are noisy for small numbers of replicates, the estimates 
 are smoothed across neighboring loci (though the effect size estimates
 themselves are not smoothed; that can be accomplished by setting 
-smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used.}
+smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used. If 3,
+then the same stat as in 1, but using median absolute deviation (MAD)
+instead of SD.}
 
 \item{sampleSize}{positive integer that represents the number of samples
 in each condition.  Defaults to \code{(ncol(OligoSignal)-1)/2}.}

@@ -1,4 +1,4 @@
-#' Perform inference to detect differential regions in oligo experiments
+  #' Perform inference to detect differential regions in oligo experiments
 #'
 #' This is the main inference function that aims to find regions with
 #' differential signal between two conditions.  The two main steps of the 
@@ -59,13 +59,15 @@
 #' @param altStat numeric value indicating whether to use alternate statistic
 #'    for single loci in constructing candidate regions that incorporates the
 #'    standard deviation among replicates.  If 0 (default), differences in means
-#'    are used as the statistic.  If 1, t-statistics (instead of
-#'    effect size estimates) will be used (i.e. t-stat = effect size / sd).  
+#'    are used as the statistic.  If 1, modified t-statistics (instead of
+#'    effect size estimates) will be used (t-stat = median difference / sd).  
 #'    Since estimates of standard 
 #'    deviations are noisy for small numbers of replicates, the estimates 
 #'    are smoothed across neighboring loci (though the effect size estimates
 #'    themselves are not smoothed; that can be accomplished by setting 
-#'    smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used.
+#'    smooth=TRUE).  If 2, Wilcoxon rank sum statistics are used. If 3,
+#'    then the same stat as in 1, but using median absolute deviation (MAD)
+#'    instead of SD.
 #' @return a data.frame that contains the results of the inference. The
 #'    data.frame contains one row for each candidate region, and 
 #'    9 columns, in the following order: 1. chr = 
@@ -353,6 +355,49 @@ bumphunt = function(oligo.mat, design,
       suppressWarnings(wilcox.test(x[g1], x[g2], exact=FALSE,
                                    correct=FALSE)$statistic))
     est <- data.frame(coef= (est1 - sampleSize^2/2) / sampleSize^2)
+  }else if (as.numeric(altStat)==3){     # use alternate single-loci stat that incorporates SD 
+    # function to smooth sds (internal function from bsseq package)
+    smoothSd <- function(Sds, k, minSD) {
+      k0 <- floor(k/2)
+      if(all(is.na(Sds))) return(Sds)
+      thresSD <- pmax(Sds, minSD, na.rm = TRUE)
+      addSD <- rep(minSD, k0)
+      sSds <- as.vector(runmean(Rle(c(addSD, thresSD, addSD)), k = k))
+      sSds
+    }
+    
+    g1 <- which(design[,coef]==1)
+    g2 <- which(design[,coef]==0)
+    
+    group1.means <- apply(log2(oligo.mat+1)[, g1, drop = FALSE], 1,
+                          function(x) median(x, na.rm=FALSE))
+    group2.means <- apply(log2(oligo.mat+1)[, g2, drop = FALSE], 1,
+                          function(x) median(x, na.rm=FALSE))
+    
+    group1.MAD <- apply(log2(oligo.mat+1)[, g1, drop = FALSE], 1,
+                          function(x) median(abs(x - median(x, na.rm=FALSE))))
+    group2.MAD <- apply(log2(oligo.mat+1)[, g2, drop = FALSE], 1,
+                          function(x) median(abs(x - median(x, na.rm=FALSE))))
+    
+    rawSds <- ((length(g1) - 1) * group1.MAD + (length(g2) - 1) * group2.MAD) /
+               (length(g1) + length(g2) - 2)
+    
+    clusterIdx <- split(seq(along=cluster), cluster)
+    sdThresh <- quantile(rawSds, 0.50, na.rm = TRUE)
+    smoothSds <- unlist(lapply(clusterIdx, function(idx) {
+      smoothSd(rawSds[idx], k = 5, minSD = sdThresh)
+    }))
+    scale <- sqrt(1/length(g1) + 1/length(g2))
+    tstat.sd <- smoothSds * scale
+    tstat.sd <- tstat.sd
+    if (!naive){
+      tstat <- (group1.means - group2.means) / tstat.sd
+    }else{
+      tstat <- (group1.means - group2.means) 
+    }
+    is.na(tstat)[tstat.sd == 0] <- TRUE
+    
+    est <- data.frame(coef=tstat, stdev.unscaled=rawSds, sigma=scale)
   }else if(as.numeric(altStat)==0 & logT){
     est <- bumphunter:::.getEstimate(log2(oligo.mat+1), 
                                      design, coef, full=TRUE) 
