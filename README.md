@@ -75,7 +75,7 @@ Our next step is to normalize the counts for library size. We use the normCounts
 
 ```r
 rawCounts <- system.file("extdata", "allTranscriptsCounts_Raw.tsv", package = "oligoGames")
-
+rawCounts <- utils::read.table(rawCounts, header=TRUE, stringsAsFactors=FALSE)
 
 normalizedCounts <- normalize(rawCounts, normType='median')
 ```
@@ -98,7 +98,7 @@ Now we are in the final round of our game and we will infer the differential reg
 ```r
 DRregions <- DRfinder(modeledNucs, conditionLabels, minInSpan = 5, 
 bpSpan = 50, minNumRegion = 3, cutoff = 0.05, smooth = TRUE, 
-verbose = TRUE, workers = 1, sampleSize = 1, maxPerms = 50)
+verbose = TRUE, workers = 1, maxPerms = 50)
 ```
 
 # Bug reports
