@@ -558,8 +558,13 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
     }else{
       Y = oligo.mat[ix,]
     }
+    # check that signal isn't all constant within condition
+    if (length(unique(as.vector(Y[,1:sampleSize]))) == 1 &&
+        length(unique(as.vector(Y[,(sampleSize+1):(2*sampleSize)]))) == 1 )
+      return(NA)
+    
     Y <- melt(Y)
-
+    
     Y$X <- X
     Y$L <- L
     int.knots <- ceiling((max(pos[ix]) - min(pos[ix])) / 100) + 1
@@ -613,7 +618,9 @@ regionFinder <- function(x, chr, pos, cluster=NULL,
   names(res) <- c("up","dn")
   res <- rbind(res$up,res$dn)
   if(order & nrow(res)>0) res <- res[order(-abs(res$stat)),]
-
+  
+  # remove regions with no variation
+  res <- res[!is.na(res$stat),]
   return(res)
 }
 
